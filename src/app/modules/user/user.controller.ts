@@ -6,7 +6,8 @@ import { Request, Response } from "express";
 
 const registerUser = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
-  const result = await UserServices.registerUserIntoDB(payload);
+  const file = req.file;
+  const result = await UserServices.registerUserIntoDB(payload, file);
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
@@ -17,6 +18,16 @@ const registerUser = catchAsync(async (req: Request, res: Response) => {
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const result = await UserServices.getAllUsersFromDB();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Users Retrieve successfully",
+    data: result,
+  });
+});
+
+const getAllSellerUsers = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.getAllSellerUsersFromDB();
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -85,6 +96,7 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
 export const UserControllers = {
   registerUser,
   getAllUsers,
+  getAllSellerUsers,
   getMyProfile,
   getUserDetails,
   updateUserStatus,

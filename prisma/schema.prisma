@@ -8,18 +8,22 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  name        String?
-  phone       String
-  email       String       @unique
-  password    String
-  customerId  String?
-  accountId   String?
-  accountLink String?
-  role        UserRoleEnum @default(USER)
-  status      UserStatus   @default(ACTIVATE)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String?       @unique
+  password      String?
+  customerId    String?
+  accountId     String?
+  accountLink   String?
+  fcmToken      String?
+  ID            String?
+  certificate   String?
+  profileImage  String?
+  role          UserRoleEnum  @default(USER)
+  status        UserStatus    @default(ACTIVATE)
+  profileStatus ProfileStatus @default(NEW)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   // Relationships
 
@@ -37,9 +41,9 @@ model Otp {
   @@map("otps")
 }
 
-
 enum UserRoleEnum {
   USER
+  SELLER
   ADMIN
   SUPERADMIN
 }
@@ -48,4 +52,10 @@ enum UserStatus {
   ACTIVATE
   INACTIVATE
   BLOCKED
+}
+
+enum ProfileStatus {
+  CERTIFITE
+  POPULAR
+  NEW
 }

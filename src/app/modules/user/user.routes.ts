@@ -1,22 +1,25 @@
 import express from "express";
 import auth from "../../middlewares/auth";
 import { UserControllers } from "./user.controller";
+import { fileUploader } from "../../helpers/fileUploader";
 const router = express.Router();
 
-router.post("/register", UserControllers.registerUser);
-
-router.get("/", auth("ADMIN", "SUPERADMIN"), UserControllers.getAllUsers);
-
-router.get(
-  "/me",
-  auth("USER", "ADMIN", "SUPERADMIN"),
-  UserControllers.getMyProfile
+router.post(
+  "/register",
+  fileUploader.uploadCertificateImage,
+  UserControllers.registerUser
 );
+
+router.get("/", UserControllers.getAllUsers);
+
+router.get("/seller", UserControllers.getAllSellerUsers);
+
+router.get("/me", auth(), UserControllers.getMyProfile);
 
 router.get("/:id", auth(), UserControllers.getUserDetails);
 router.put(
   "/update-profile",
-  auth("USER", "ADMIN"),
+  auth("USER", "ADMIN", "SELLER"),
   UserControllers.updateMyProfile
 );
 

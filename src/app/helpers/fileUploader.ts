@@ -15,25 +15,10 @@ const upload = multer({ storage: storage });
 
 // upload single image
 const uploadprofileImage = upload.single("profileImage");
-const uploadProductImage = upload.single("productImage");
-
-// // upload multiple image
-// const uploadmultipeImage = upload.fields([
-//   { name: "profileImage", maxCount: 1 },
-//   { name: "idCardFront", maxCount: 1 },
-//   { name: "idCardBack", maxCount: 1 },
-//   { name: "licenseFront", maxCount: 1 },
-//   { name: "licenseBack", maxCount: 1 },
-//   { name: "kjoreseddelFront", maxCount: 1 },
-//   { name: "kjoreseddelBack", maxCount: 1 },
-//   { name: "image", maxCount: 1 },
-//   { name: "taxiMeter", maxCount: 1 },
-//   { name: "roofLight", maxCount: 1 },
-//   { name: "insurance", maxCount: 1 },
-// ]);
+const uploadCertificateImage = upload.single("certificate");
 
 export const fileUploader = {
   upload,
   uploadprofileImage,
-  uploadProductImage,
+  uploadCertificateImage,
 };
