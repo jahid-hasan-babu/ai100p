@@ -8,7 +8,6 @@ const superAdminData = {
   email: "admin@gmail.com",
   password: "",
   role: UserRoleEnum.SUPERADMIN,
-  phone: "1234567890",
 };
 
 const seedSuperAdmin = async () => {
