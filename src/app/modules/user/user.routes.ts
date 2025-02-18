@@ -31,7 +31,7 @@ router.put(
   UserControllers.updateUserStatus
 );
 
-router.delete("/delete", auth("USER", "ADMIN"), UserControllers.deleteUser);
+router.post("/delete", auth("USER", "ADMIN"), UserControllers.deleteUser);
 
 
 

@@ -244,6 +244,9 @@ const getAllUsersFromDB = async () => {
         role: {
           in: ["SUPERADMIN", "ADMIN"],
         },
+        status: {
+          in: ["BLOCKED", "INACTIVATE"],
+        },
       },
     },
     orderBy: {
@@ -393,9 +396,12 @@ const deleteUser = async (id: string) => {
   if (!existingUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
-  const result = await prisma.user.delete({
+  const result = await prisma.user.update({
     where: {
       id: id,
+    },
+    data: {
+      status: "INACTIVATE",
     },
   });
   return result;
