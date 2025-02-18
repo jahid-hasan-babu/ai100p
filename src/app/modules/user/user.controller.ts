@@ -5,9 +5,9 @@ import catchAsync from "../../utils/catchAsync";
 import { Request, Response } from "express";
 
 const registerUser = catchAsync(async (req: Request, res: Response) => {
-  const payload = req.body;
-  const file = req.file;
-  const result = await UserServices.registerUserIntoDB(payload, file);
+  const payload = req.body.bodyData;
+  const files = req.files;
+  const result = await UserServices.registerUserIntoDB(payload, files);
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,

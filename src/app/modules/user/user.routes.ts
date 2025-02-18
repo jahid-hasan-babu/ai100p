@@ -2,11 +2,13 @@ import express from "express";
 import auth from "../../middlewares/auth";
 import { UserControllers } from "./user.controller";
 import { fileUploader } from "../../helpers/fileUploader";
+import parseBodyData from "../../../helpars/parseBodyData";
 const router = express.Router();
 
 router.post(
   "/register",
-  fileUploader.uploadCertificateImage,
+  fileUploader.uploadmultipeImage,
+  parseBodyData,
   UserControllers.registerUser
 );
 
