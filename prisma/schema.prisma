@@ -12,6 +12,7 @@ model User {
   name          String?
   userName      String?
   email         String?       @unique
+  address       String?
   password      String?
   phone         String?
   customerId    String?
@@ -21,6 +22,11 @@ model User {
   ID            String?
   certificate   String?
   profileImage  String?
+  bio           String?
+  dateOfBirth   String?
+  gender        Gneder?
+  locationLat   Float?
+  locationLong  Float?
   isVerified    Boolean       @default(false)
   isShared      Boolean       @default(false)
   role          UserRoleEnum  @default(USER)
@@ -139,4 +145,10 @@ enum ProfileStatus {
   CERTIFITE
   POPULAR
   NEW
+}
+
+enum Gneder {
+  MALE
+  FEMALE
+  OTHER
 }
