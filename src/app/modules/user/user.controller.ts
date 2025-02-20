@@ -107,6 +107,19 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const notificationPermission = catchAsync(
+  async (req: Request, res: Response) => {
+    const id = req.user.id;
+    const payload = req.body;
+    const result = await UserServices.notificationPermission(id, payload);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      message: "Notification permission updated successfully",
+      data: result,
+    });
+  }
+);
+
 export const UserControllers = {
   registerUser,
   getAllUsers,
@@ -116,4 +129,5 @@ export const UserControllers = {
   updateUserStatus,
   updateMyProfile,
   deleteUser,
+  notificationPermission,
 };

@@ -263,6 +263,7 @@ const getMyProfileFromDB = async (id: string) => {
       dateOfBirth: true,
       gender: true,
       phone: true,
+      isNotification: true,
       website: true,
       facebook: true,
       twitter: true,
@@ -413,6 +414,29 @@ const deleteUser = async (id: string) => {
   return;
 };
 
+const notificationPermission = async (id: string, payload: any) => {
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      id: id,
+    },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const result = await prisma.user.update({
+    where: {
+      id: id,
+    },
+    data: {
+      isNotification: payload.isNotification,
+    },
+  });
+
+  return;
+};
+
 export const UserServices = {
   registerUserIntoDB,
   getAllUsersFromDB,
@@ -422,4 +446,5 @@ export const UserServices = {
   updateUserStatus,
   updateMyProfileIntoDB,
   deleteUser,
+  notificationPermission,
 };

@@ -8,10 +8,10 @@ datasource db {
 }
 
 model User {
-  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
   name           String?
   userName       String?
-  email          String?       @unique
+  email          String?          @unique
   address        String?
   password       String?
   phone          String?
@@ -33,14 +33,14 @@ model User {
   twitter        String?
   youtube        String?
   tikTok         String?
-  isNotification Boolean       @default(true)
-  isVerified     Boolean       @default(false)
-  isShared       Boolean       @default(false)
-  role           UserRoleEnum  @default(USER)
-  status         UserStatus    @default(ACTIVATE)
-  profileStatus  ProfileStatus @default(NEW)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  isNotification NotificationType @default(ON)
+  isVerified     Boolean          @default(false)
+  isShared       Boolean          @default(false)
+  role           UserRoleEnum     @default(USER)
+  status         UserStatus       @default(ACTIVATE)
+  profileStatus  ProfileStatus    @default(NEW)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   // Relationships
   Post    Post[]
@@ -158,4 +158,9 @@ enum Gneder {
   MALE
   FEMALE
   OTHER
+}
+
+enum NotificationType {
+  ON
+  OFF
 }

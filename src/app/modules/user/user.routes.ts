@@ -39,6 +39,12 @@ router.post(
   UserControllers.deleteUser
 );
 
+router.post(
+  "/notification-permission",
+  auth("USER", "ADMIN", "SELLER"),
+  UserControllers.notificationPermission
+);
+
 
 
 
