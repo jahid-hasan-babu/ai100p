@@ -45,7 +45,11 @@ router.post(
   UserControllers.notificationPermission
 );
 
-
+router.put(
+  "/update-password",
+  auth("USER", "ADMIN", "SELLER"),
+  UserControllers.changePassword
+);
 
 
 export const UserRouters = router;

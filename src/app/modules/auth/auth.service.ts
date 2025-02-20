@@ -8,18 +8,18 @@ import prisma from "../../utils/prisma";
 import ApiError from "../../errors/ApiError";
 import sentEmailUtility from "../../utils/sentEmailUtility";
 
+
 const loginUserFromDB = async (payload: {
   email: string;
   password: string;
+  fcmToken?: string;
 }) => {
-  // Find the user by email
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
       email: payload.email,
     },
   });
 
-  // Check if the password is correct
   const isCorrectPassword = await bcrypt.compare(
     payload.password,
     userData.password as string
@@ -28,7 +28,18 @@ const loginUserFromDB = async (payload: {
   if (!isCorrectPassword) {
     throw new AppError(httpStatus.BAD_REQUEST, "Password incorrect");
   }
-  // Generate an access token
+
+  if (payload?.fcmToken) {
+    await prisma.user.update({
+      where: {
+        email: payload.email,
+      },
+      data: {
+        fcmToken: payload.fcmToken,
+      },
+    });
+  }
+
   const accessToken = generateToken(
     {
       id: userData.id,
@@ -39,15 +50,20 @@ const loginUserFromDB = async (payload: {
     config.jwt.access_expires_in as string
   );
 
-  // Return user details and access token
   return {
     id: userData.id,
     name: userData.name,
+    userName: userData.userName,
+    profileImage: userData.profileImage,
+    ProfileStatus: userData.profileStatus,
     email: userData.email,
+    locationLat: userData.locationLat,
+    locationLong: userData.locationLong,
     role: userData.role,
     accessToken: accessToken,
   };
 };
+
 
 const forgotPassword = async (payload: { email: string }) => {
   // Check if the user exists

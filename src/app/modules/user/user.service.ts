@@ -12,6 +12,7 @@ import { paginationHelper } from "../../../helpars/paginationHelper";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { searchFilter } from "../../utils/searchFilter";
 
+
 interface UserWithOptionalPassword extends Omit<User, "password"> {
   password?: string;
 }
@@ -414,6 +415,45 @@ const deleteUser = async (id: string) => {
   return;
 };
 
+const changePassword = async (
+  id: string,
+  payload: { currentPass: string; newPass: string }
+) => {
+  const existingUser = await prisma.user.findUnique({
+    where: { id },
+    select: { password: true },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const bcryptPassword = existingUser.password;
+  const isMatch = await bcrypt.compare(
+    payload.currentPass,
+    bcryptPassword as string
+  );
+
+  if (!isMatch) {
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "Current password is incorrect"
+    );
+  }
+
+  const hashedPassword = await bcrypt.hash(
+    payload.newPass,
+    parseInt(process.env.BCRYPT_SALT_ROUNDS || "12")
+  );
+
+  await prisma.user.update({
+    where: { id },
+    data: { password: hashedPassword },
+  });
+
+  return;
+};
+
 const notificationPermission = async (id: string, payload: any) => {
   const existingUser = await prisma.user.findUnique({
     where: {
@@ -447,4 +487,5 @@ export const UserServices = {
   updateMyProfileIntoDB,
   deleteUser,
   notificationPermission,
+  changePassword,
 };

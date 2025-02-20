@@ -120,6 +120,17 @@ const notificationPermission = catchAsync(
   }
 );
 
+const changePassword = catchAsync(async (req: Request, res: Response) => {
+  const id = req.user.id;
+  const payload = req.body;
+  const result = await UserServices.changePassword(id, payload);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Password updated successfully",
+    data: result,
+  });
+});
+
 export const UserControllers = {
   registerUser,
   getAllUsers,
@@ -130,4 +141,5 @@ export const UserControllers = {
   updateMyProfile,
   deleteUser,
   notificationPermission,
+  changePassword,
 };
