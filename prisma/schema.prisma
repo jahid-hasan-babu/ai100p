@@ -64,13 +64,15 @@ model Otp {
 }
 
 model Post {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  title     String?
-  body      String?
-  image     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  title        String?
+  image        String?
+  address      String?
+  locationLat  Float?
+  locationLong Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   user    User      @relation(fields: [userId], references: [id])
   Like    Like[]
