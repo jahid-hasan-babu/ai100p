@@ -8,32 +8,39 @@ datasource db {
 }
 
 model User {
-  id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  name          String?
-  userName      String?
-  email         String?       @unique
-  address       String?
-  password      String?
-  phone         String?
-  customerId    String?
-  accountId     String?
-  accountLink   String?
-  fcmToken      String?
-  ID            String?
-  certificate   String?
-  profileImage  String?
-  bio           String?
-  dateOfBirth   String?
-  gender        Gneder?
-  locationLat   Float?
-  locationLong  Float?
-  isVerified    Boolean       @default(false)
-  isShared      Boolean       @default(false)
-  role          UserRoleEnum  @default(USER)
-  status        UserStatus    @default(ACTIVATE)
-  profileStatus ProfileStatus @default(NEW)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  name           String?
+  userName       String?
+  email          String?       @unique
+  address        String?
+  password       String?
+  phone          String?
+  customerId     String?
+  accountId      String?
+  accountLink    String?
+  fcmToken       String?
+  ID             String?
+  certificate    String?
+  profileImage   String?
+  bio            String?
+  dateOfBirth    String?
+  gender         Gneder?
+  locationLat    Float?
+  locationLong   Float?
+  website        String?
+  facebook       String?
+  instagram      String?
+  twitter        String?
+  youtube        String?
+  tikTok         String?
+  isNotification Boolean       @default(true)
+  isVerified     Boolean       @default(false)
+  isShared       Boolean       @default(false)
+  role           UserRoleEnum  @default(USER)
+  status         UserStatus    @default(ACTIVATE)
+  profileStatus  ProfileStatus @default(NEW)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   // Relationships
   Post    Post[]

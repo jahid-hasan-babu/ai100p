@@ -21,6 +21,8 @@ router.get("/me", auth(), UserControllers.getMyProfile);
 router.get("/:id", auth(), UserControllers.getUserDetails);
 router.put(
   "/update-profile",
+  fileUploader.uploadmultipeImage,
+  parseBodyData,
   auth("USER", "ADMIN", "SELLER"),
   UserControllers.updateMyProfile
 );
@@ -31,7 +33,11 @@ router.put(
   UserControllers.updateUserStatus
 );
 
-router.post("/delete", auth("USER", "ADMIN"), UserControllers.deleteUser);
+router.post(
+  "/delete",
+  auth("USER", "ADMIN", "SELLER"),
+  UserControllers.deleteUser
+);
 
 
 

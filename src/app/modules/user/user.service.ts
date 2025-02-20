@@ -8,11 +8,13 @@ import { generateToken } from "../../utils/generateToken";
 import { Secret } from "jsonwebtoken";
 import config from "../../../config";
 import { fileUploader } from "../../helpers/fileUploader";
+import { paginationHelper } from "../../../helpars/paginationHelper";
+import { IPaginationOptions } from "../../interface/pagination.type";
+import { searchFilter } from "../../utils/searchFilter";
 
 interface UserWithOptionalPassword extends Omit<User, "password"> {
   password?: string;
 }
-
 
 const registerUserIntoDB = async (payload: any, files: any) => {
   const hashedPassword: string = await bcrypt.hash(
@@ -113,23 +115,45 @@ const registerUserIntoDB = async (payload: any, files: any) => {
   return result;
 };
 
-const getAllUsersFromDB = async () => {
+const getAllUsersFromDB = async (
+  options: IPaginationOptions & { search?: string }
+) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const { search } = options;
+
+  const searchFilters = searchFilter(search as string);
+
+  // Fetch paginated users
   const result = await prisma.user.findMany({
     where: {
-      NOT: {
-        role: {
-          in: ["SUPERADMIN", "ADMIN"],
+      ...searchFilters, // Ensuring search filters apply correctly
+      AND: [
+        {
+          NOT: {
+            role: {
+              in: ["SUPERADMIN", "ADMIN"],
+            },
+          },
         },
-        status: {
-          in: ["BLOCKED", "INACTIVATE"],
+        {
+          NOT: {
+            status: {
+              in: ["BLOCKED", "INACTIVATE"],
+            },
+          },
         },
-      },
+      ],
     },
     orderBy: {
       createdAt: "desc",
     },
+    take: limit,
+    skip,
     select: {
       id: true,
+      name: true,
+      userName: true,
+      address: true,
       email: true,
       role: true,
       status: true,
@@ -139,20 +163,62 @@ const getAllUsersFromDB = async () => {
     },
   });
 
-  return result;
+  const total = await prisma.user.count({
+    where: {
+      ...searchFilters,
+      AND: [
+        {
+          NOT: {
+            role: {
+              in: ["SUPERADMIN", "ADMIN"],
+            },
+          },
+        },
+        {
+          NOT: {
+            status: {
+              in: ["BLOCKED", "INACTIVATE"],
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    },
+    data: result,
+  };
 };
 
-const getAllSellerUsersFromDB = async () => {
+const getAllSellerUsersFromDB = async (
+  options: IPaginationOptions & { search?: string }
+) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const { search } = options;
+
+  const searchFilters = searchFilter(search as string);
+
   const result = await prisma.user.findMany({
     where: {
       role: "SELLER",
+      ...searchFilters,
     },
     orderBy: {
       createdAt: "desc",
     },
+    take: limit,
+    skip,
     select: {
       id: true,
       email: true,
+      name: true,
+      userName: true,
       role: true,
       status: true,
       profileImage: true,
@@ -162,7 +228,22 @@ const getAllSellerUsersFromDB = async () => {
     },
   });
 
-  return result;
+  const total = await prisma.user.count({
+    where: {
+      ...searchFilters,
+      role: "SELLER",
+    },
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    },
+    data: result,
+  };
 };
 
 const getMyProfileFromDB = async (id: string) => {
@@ -181,6 +262,13 @@ const getMyProfileFromDB = async (id: string) => {
       bio: true,
       dateOfBirth: true,
       gender: true,
+      phone: true,
+      website: true,
+      facebook: true,
+      twitter: true,
+      instagram: true,
+      tikTok: true,
+      youtube: true,
       locationLat: true,
       locationLong: true,
       createdAt: true,
@@ -203,11 +291,24 @@ const getUserDetailsFromDB = async (id: string) => {
     where: { id },
     select: {
       id: true,
+      name: true,
       email: true,
       role: true,
       status: true,
       profileImage: true,
       profileStatus: true,
+      bio: true,
+      dateOfBirth: true,
+      gender: true,
+      phone: true,
+      website: true,
+      facebook: true,
+      twitter: true,
+      instagram: true,
+      tikTok: true,
+      youtube: true,
+      locationLat: true,
+      locationLong: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -238,10 +339,19 @@ const updateMyProfileIntoDB = async (id: string, payload: any) => {
       name: true,
       email: true,
       role: true,
-      phone: true,
+      status: true,
       profileImage: true,
-      address: true,
+      profileStatus: true,
       bio: true,
+      dateOfBirth: true,
+      gender: true,
+      phone: true,
+      website: true,
+      facebook: true,
+      twitter: true,
+      instagram: true,
+      tikTok: true,
+      youtube: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -281,6 +391,8 @@ const deleteUser = async (id: string) => {
   if (!existingUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
+  if (existingUser.status === "INACTIVATE")
+    throw new ApiError(httpStatus.BAD_REQUEST, "User already deleted");
   const result = await prisma.user.update({
     where: {
       id: id,
@@ -289,7 +401,7 @@ const deleteUser = async (id: string) => {
       status: "INACTIVATE",
     },
   });
-  return result;
+  return;
 };
 
 export const UserServices = {

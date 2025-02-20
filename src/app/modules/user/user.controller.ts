@@ -3,6 +3,7 @@ import { UserServices } from "./user.service";
 import sendResponse from "../../utils/sendResponse";
 import catchAsync from "../../utils/catchAsync";
 import { Request, Response } from "express";
+import pickValidFields from "../../utils/pickValidFields";
 
 const registerUser = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body.bodyData;
@@ -17,7 +18,14 @@ const registerUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserServices.getAllUsersFromDB();
+  const options = pickValidFields(req.query, [
+    "limit",
+    "page",
+    "user",
+    "search",
+  ]);
+
+  const result = await UserServices.getAllUsersFromDB(options);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -27,7 +35,13 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllSellerUsers = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserServices.getAllSellerUsersFromDB();
+  const options = pickValidFields(req.query, [
+    "limit",
+    "page",
+    "user",
+    "search",
+  ]);
+  const result = await UserServices.getAllSellerUsersFromDB(options);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -60,7 +74,7 @@ const getUserDetails = catchAsync(async (req: Request, res: Response) => {
 
 const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
   const id = req.user.id;
-  const payload = req.body;
+  const payload = req.body.bodyData;
   const result = await UserServices.updateMyProfileIntoDB(id, payload);
 
   sendResponse(res, {
@@ -85,7 +99,6 @@ const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
 const deleteUser = catchAsync(async (req: Request, res: Response) => {
   const id = req.user.id;
   const result = await UserServices.deleteUser(id);
-
   sendResponse(res, {
     statusCode: httpStatus.OK,
     message: "User deleted successfully",
