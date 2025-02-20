@@ -316,7 +316,7 @@ const getUserDetailsFromDB = async (id: string) => {
   return user;
 };
 
-const updateMyProfileIntoDB = async (id: string, payload: any) => {
+const updateMyProfileIntoDB = async (id: string, payload: any, files: any) => {
   const existingUser = await prisma.user.findUnique({
     where: { id },
   });
@@ -325,8 +325,17 @@ const updateMyProfileIntoDB = async (id: string, payload: any) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "User not found");
   }
 
+  let profileImage = null;
+  if (files?.profileImage?.length > 0) {
+    const uploadResult = await fileUploader.uploadToDigitalOcean(
+      files.profileImage[0]
+    );
+    profileImage = uploadResult.Location;
+  }
+
   const updatedData = {
     ...payload,
+    profileImage: profileImage,
   };
 
   const result = await prisma.user.update({

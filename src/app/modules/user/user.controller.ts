@@ -75,7 +75,8 @@ const getUserDetails = catchAsync(async (req: Request, res: Response) => {
 const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
   const id = req.user.id;
   const payload = req.body.bodyData;
-  const result = await UserServices.updateMyProfileIntoDB(id, payload);
+  const files = req.files;
+  const result = await UserServices.updateMyProfileIntoDB(id, payload, files);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
