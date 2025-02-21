@@ -4,12 +4,13 @@ import { CommentControllers } from "./comment.controller";
 import parseBodyData from "../../../helpars/parseBodyData";
 const router = express.Router();
 
-router.post(
-  "/create-comment/:id",
-  auth("USER", "SELLER"),
-  parseBodyData,
-  CommentControllers.createComment
-);
+router.post("/:id", auth(), parseBodyData, CommentControllers.createComment);
+
+router.get("/:id", CommentControllers.getAllComments);
+
+router.put("/:id", auth(), CommentControllers.updateComment);
+
+router.delete("/:id", auth(), CommentControllers.deleteComment);
 
 
 

@@ -25,6 +25,69 @@ const createComment = async (payload: { comment: string }, userId: string, postI
   return comment;
 }
 
+const getAllComments = async (postId: string) => {
+  const comments = await prisma.comment.findMany({
+    where: {
+      postId: postId,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          profileImage: true,
+        },
+      },
+    },
+  });
+  return comments;
+};
+
+const updateComment = async (
+  commentId: string,
+  payload: { comment: string }
+) => {
+  const existingComment = await prisma.comment.findUnique({
+    where: {
+      id: commentId,
+    },
+  });
+
+  if (!existingComment) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Comment not found");
+  }
+  const comment = await prisma.comment.update({
+    where: {
+      id: commentId,
+    },
+    data: {
+      comment: payload.comment,
+    },
+  });
+  return comment;
+};
+
+const deleteComment = async (commentId: string) => {
+  const existingComment = await prisma.comment.findUnique({
+    where: {
+      id: commentId,
+    },
+  });
+
+  if (!existingComment) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Comment not found");
+  }
+
+  const result = await prisma.comment.delete({
+    where: {
+      id: commentId,
+    },
+  });
+  return;
+};
 export const CommentServices = {
   createComment,
+  getAllComments,
+  updateComment,
+  deleteComment,
 };
