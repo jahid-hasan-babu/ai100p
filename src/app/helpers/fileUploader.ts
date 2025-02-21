@@ -55,7 +55,7 @@ interface UploadResponse {
 }
 const upload = multer({ storage: storage });
 
-const uploadmultipeImage = upload.fields([
+const uploadMultipleImage = upload.fields([
   { name: "profileImage", maxCount: 1 },
   { name: "certificate", maxCount: 1 },
 ]);
@@ -120,7 +120,7 @@ const uploadToDigitalOcean = async (
 };
 export const fileUploader = {
   upload,
-  uploadmultipeImage,
+  uploadMultipleImage,
   uploadToDigitalOcean,
   uploadPostImage,
   uploadFile,
