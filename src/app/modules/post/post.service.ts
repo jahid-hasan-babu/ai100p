@@ -85,6 +85,7 @@ const getAllPosts = async (
   const total = await prisma.post.count({
     where: {
       ...searchFilters,
+      isDeleted: false,
     },
   });
 
@@ -152,9 +153,34 @@ const updatePost = async (id: string, payload: any, files: any) => {
   return result;
 };
 
+const deletePost = async (id: string) => {
+  const post = await prisma.post.findUnique({
+    where: {
+      id: id,
+      isDeleted: false,
+    },
+  });
+
+  if (!post) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Post not found");
+  }
+
+  const result = await prisma.post.update({
+    where: {
+      id: id,
+    },
+    data: {
+      isDeleted: true,
+    },
+  });
+
+  return;
+};
+
 export const PostServices = {
   createPost,
   getAllPosts,
   getSinglePost,
   updatePost,
+  deletePost,
 };
