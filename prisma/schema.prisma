@@ -24,7 +24,7 @@ model User {
   profileImage   String?
   bio            String?
   dateOfBirth    String?
-  gender         Gneder?
+  gender         Gender?
   locationLat    Float?
   locationLong   Float?
   website        String?
@@ -49,6 +49,9 @@ model User {
   Share     Share[]
   Report    Report[]
   SavedPost SavedPost[]
+  messages       Message[]       @relation("UserMessages")
+  conversations  Conversation[]  @relation("User1Conversations")
+  conversations2 Conversation[]  @relation("User2Conversations")
 
   @@map("users")
 }
@@ -153,6 +156,39 @@ model SavedPost {
   @@map("savedPosts")
 }
 
+model Conversation {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  user1Id   String    @db.ObjectId
+  user2Id   String    @db.ObjectId
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  messages  Message[] @relation("ConversationMessages")
+  user1 User @relation("User1Conversations", fields: [user1Id], references: [id])
+  user2 User @relation("User2Conversations", fields: [user2Id], references: [id])
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String   @db.ObjectId
+  senderId       String   @db.ObjectId
+  receiverId     String   @db.ObjectId
+  content        String?
+  file           String?
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relationships
+  sender       User         @relation("UserMessages", fields: [senderId], references: [id])
+  conversation Conversation @relation("ConversationMessages", fields: [conversationId], references: [id])
+
+  @@map("messages")
+}
+
 enum UserRoleEnum {
   USER
   SELLER
@@ -172,7 +208,7 @@ enum ProfileStatus {
   NEW
 }
 
-enum Gneder {
+enum Gender {
   MALE
   FEMALE
   OTHER
