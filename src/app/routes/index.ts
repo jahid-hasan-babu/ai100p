@@ -3,6 +3,7 @@ import { AuthRouters } from "../modules/auth/auth.routes";
 import { UserRouters } from "../modules/user/user.routes";
 import { PostRouters } from "../modules/post/post.routes";
 import { LikeRouters } from "../modules/like/like.routes";
+import { CommentRouters } from "../modules/comment/comment.routes";
 
 const router = express.Router();
 
@@ -22,6 +23,10 @@ const moduleRoutes = [
   {
     path: "/likes",
     route: LikeRouters,
+  },
+  {
+    path: "/comments",
+    route: CommentRouters,
   },
 ];
 
