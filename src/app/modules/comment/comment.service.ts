@@ -2,7 +2,7 @@ import prisma from "../../utils/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
 import { IPaginationOptions } from "../../interface/pagination.type";
-import { paginationHelper } from "../../../helpars/paginationHelper";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 
 const createComment = async (
   payload: { comment: string },

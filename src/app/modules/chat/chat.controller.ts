@@ -52,17 +52,18 @@ const getSingleMassageConversation = catchAsync(
 
 // Send a message in a specific conversation (chatroom)
 const sendMessage = catchAsync(async (req: Request, res: Response) => {
-  const { conversationId, senderId, senderName, content } = req.body;
+  const { conversationId, senderId, senderName, content, file } = req.body;
   const result = await chatServices.createMessageIntoDB(
     conversationId,
     senderId,
     senderName,
     content,
+    file
   );
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Message sent successfully',
+    message: "Message sent successfully",
     data: result,
   });
 });
@@ -72,12 +73,12 @@ const getMessages = catchAsync(async (req: Request, res: Response) => {
   const { user1Id, user2Id } = req.query;
   const result = await chatServices.getMessagesByConversationIntoDB(
     user1Id as string,
-    user2Id as string,
+    user2Id as string
   );
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Messages retrieved successfully',
+    message: "Messages retrieved successfully",
     data: result,
   });
 });
@@ -87,7 +88,7 @@ const getUserChat = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'chat users retrieved successfully',
+    message: "chat users retrieved successfully",
     data: result,
   });
 });
@@ -99,7 +100,7 @@ const deleteConversion = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'conversation deleted successfully',
+    message: "conversation deleted successfully",
     data: result,
   });
 });
@@ -114,15 +115,28 @@ const getMyChat = catchAsync(
       message: "Chat Retrieve successfully",
       data: result,
     });
-  },
+  }
 );
 
 const searchUser = catchAsync(async (req: Request, res: Response) => {
-  const result = await chatServices.searchUser(req);
+  const options = req.query;
+  const result = await chatServices.searchUser(req, options);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: "Users Retrieve successfully",
+    data: result,
+  });
+});
+
+const generateFile = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const files = req.file;
+  const result = await chatServices.generateFile(userId, files);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "File Retrieve successfully",
     data: result,
   });
 });
@@ -137,4 +151,5 @@ export const ChatControllers = {
   deleteConversion,
   getMyChat,
   searchUser,
+  generateFile,
 };

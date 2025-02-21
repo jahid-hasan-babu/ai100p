@@ -1,8 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import httpStatus from "http-status";
 import ApiError from "../../errors/ApiError";
-// import { userFilter } from "../../utils/searchFilter";
+import { userFilter } from "../../utils/searchFilter";
 import { Request } from "express";
+import { IPaginationOptions } from "../../interface/pagination.type";
+import { paginationHelper } from "../../../helpers/paginationHelper";
+import { fileUploader } from "../../helpers/fileUploader";
 
 const prisma = new PrismaClient();
 
@@ -176,7 +179,6 @@ const countUnreadMessages = async (userId: string, chatroomId: string) => {
   return unreadCount;
 };
 const markMessagesAsRead = async (userId: string, chatroomId: string) => {
-  console.log(userId, chatroomId);
   await prisma.message.updateMany({
     where: {
       receiverId: userId,
@@ -189,23 +191,38 @@ const markMessagesAsRead = async (userId: string, chatroomId: string) => {
   });
 };
 
+const searchUser = async (req: Request, options: IPaginationOptions) => {
+  const { user } = req.query;
+  const userFilters = userFilter(user as string);
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
 
-// const searchUser = async (req: Request) => {
-//   const { user } = req.query;
-//   const userFilters = userFilter(user as string);
-//   const result = await prisma.user.findMany({
-//     where: userFilters,
-//     select: {
-//       id: true,
-//       fullName: true,
-//       profileImage: true,
-//       createdAt: true,
-//       updatedAt: true,
-//     },
-//   });
+  const result = await prisma.user.findMany({
+    where: userFilters,
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: limit,
+    skip,
+    select: {
+      id: true,
+      name: true,
+      profileImage: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
 
-//   return result;
-// };
+  return {
+    meta: {
+      total: await prisma.user.count({
+        where: userFilters,
+      }),
+      page,
+      limit,
+    },
+    data: result,
+  };
+};
 
 const getMyChat = async (userId: string) => {
   const result = await prisma.conversation.findMany({
@@ -251,6 +268,29 @@ const getMyChat = async (userId: string) => {
   return chatList;
 };
 
+const generateFile = async (userId: string, files: any) => {
+  let file = null;
+
+  if (files) {
+    try {
+      const uploadResult = await fileUploader.uploadToDigitalOcean(files); // Use files.path if needed
+      file = uploadResult?.Location || null;
+    } catch (error) {
+      console.error("File upload failed:", error);
+      throw new Error("File upload failed");
+    }
+  }
+
+  const post = await prisma.generateFile.create({
+    data: {
+      userId: userId,
+      file,
+    },
+  });
+
+  return post;
+};
+
 export const chatServices = {
   createConversationIntoDB,
   getConversationsByUserIdIntoDB,
@@ -261,5 +301,6 @@ export const chatServices = {
   countUnreadMessages,
   markMessagesAsRead,
   getMyChat,
-  // searchUser,
+  searchUser,
+  generateFile,
 };

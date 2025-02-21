@@ -61,6 +61,7 @@ const uploadmultipeImage = upload.fields([
 ]);
 
 const uploadPostImage = upload.single("image");
+const uploadFile = upload.single("file");
 
 // Configure DigitalOcean Spaces
 export const s3Client = new S3Client({
@@ -122,4 +123,5 @@ export const fileUploader = {
   uploadmultipeImage,
   uploadToDigitalOcean,
   uploadPostImage,
+  uploadFile,
 };
