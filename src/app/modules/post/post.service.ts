@@ -17,13 +17,14 @@ import { searchFilter } from "../../utils/searchFilter";
 
 
 const createPost = async (userId: string, payload: any, files: any) => {
+
+ 
   let image = null;
-  if (files?.profileImage) {
-    const uploadResult = await fileUploader.uploadToDigitalOcean(
-      files.image
-    );
+  if (files) {
+    const uploadResult = await fileUploader.uploadToDigitalOcean(files);
     image = uploadResult.Location;
   }
+
 
   const post = await prisma.post.create({
     data: {

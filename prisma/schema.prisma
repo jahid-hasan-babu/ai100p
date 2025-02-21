@@ -71,6 +71,7 @@ model Post {
   address      String?
   locationLat  Float?
   locationLong Float?
+  isDeleted    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

@@ -6,13 +6,11 @@ import parseBodyData from "../../../helpars/parseBodyData";
 const router = express.Router();
 
 router.post(
-  "/register",
+  "/",
   fileUploader.uploadPostImage,
   parseBodyData,
-  auth("USER",  "SELLER"),
+  auth("USER", "SELLER"),
   PostControllers.createPost
 );
 
-
-
-export const UserRouters = router;
+export const PostRouters = router;

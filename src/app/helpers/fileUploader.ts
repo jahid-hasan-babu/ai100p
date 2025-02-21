@@ -60,7 +60,7 @@ const uploadmultipeImage = upload.fields([
   { name: "certificate", maxCount: 1 },
 ]);
 
-const uploadPostImage = upload.fields([{ name: "image", maxCount: 1 }]);
+const uploadPostImage = upload.single("image");
 
 // Configure DigitalOcean Spaces
 export const s3Client = new S3Client({

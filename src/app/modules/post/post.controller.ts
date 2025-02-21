@@ -24,8 +24,8 @@ import pickValidFields from "../../utils/pickValidFields";
 
 const createPost = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
-  const payload = req.body;
-  const files = req.files;
+  const payload = req.body.bodyData;
+  const files = req.file;
   const result = await PostServices.createPost(userId, payload, files);
 
   sendResponse(res, {
