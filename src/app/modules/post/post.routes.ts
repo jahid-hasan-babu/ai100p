@@ -17,4 +17,12 @@ router.get("/", PostControllers.getAllPosts);
 
 router.get("/:id", PostControllers.getSinglePost);
 
+router.put(
+  "/:id",
+  fileUploader.uploadPostImage,
+  parseBodyData,
+  auth("USER", "SELLER"),
+  PostControllers.updatePost
+);
+
 export const PostRouters = router;

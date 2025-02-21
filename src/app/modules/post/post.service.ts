@@ -5,6 +5,7 @@ import { fileUploader } from "../../helpers/fileUploader";
 import { paginationHelper } from "../../../helpars/paginationHelper";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { searchFilter2 } from "../../utils/searchFilter";
+import { deleteFromS3ByUrl } from "../../../helpars/fileDeletedFromS3";
 
 const createPost = async (userId: string, payload: any, files: any) => {
   let image = null;
@@ -37,6 +38,7 @@ const getAllPosts = async (
     },
     where: {
       ...searchFilters,
+      isDeleted: false,
     },
     take: limit,
     skip,
@@ -100,6 +102,7 @@ const getSinglePost = async (id: string) => {
   const post = await prisma.post.findUnique({
     where: {
       id: id,
+      isDeleted: false,
     },
     include: {
       _count: {
@@ -117,8 +120,41 @@ const getSinglePost = async (id: string) => {
   return post;
 };
 
+const updatePost = async (id: string, payload: any, files: any) => {
+  const post = await prisma.post.findUnique({
+    where: {
+      id: id,
+    },
+  });
+
+  if (!post) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Post not found");
+  }
+
+  let image = post.image;
+
+  if (files) {
+    deleteFromS3ByUrl(image as string);
+    const uploadResult = await fileUploader.uploadToDigitalOcean(files);
+    image = uploadResult.Location;
+  }
+
+  const result = await prisma.post.update({
+    where: {
+      id: id,
+    },
+    data: {
+      ...payload,
+      image: image,
+    },
+  });
+
+  return result;
+};
+
 export const PostServices = {
   createPost,
   getAllPosts,
   getSinglePost,
+  updatePost,
 };

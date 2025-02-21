@@ -63,8 +63,22 @@ const getSinglePost = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const updatePost = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const payload = req.body.bodyData;
+  const files = req.file;
+  const result = await PostServices.updatePost(id, payload, files);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Post updated successfully",
+    data: result,
+  });
+});
+
 export const PostControllers = {
   createPost,
   getAllPosts,
   getSinglePost,
+  updatePost,
 };
