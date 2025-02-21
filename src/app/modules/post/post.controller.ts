@@ -42,8 +42,9 @@ const getAllPosts = catchAsync(async (req: Request, res: Response) => {
     "user",
     "search",
   ]);
+  const userId = req.user.id;
 
-  const result = await PostServices.getAllPosts(options);
+  const result = await PostServices.getAllPosts(options as any, userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

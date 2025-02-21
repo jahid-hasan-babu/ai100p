@@ -23,7 +23,7 @@ const createPost = async (userId: string, payload: any, files: any) => {
   return post;
 };
 
-const getAllPosts = async (
+const getAllPosts1 = async (
   options: IPaginationOptions & { search?: string }
 ) => {
   const { search } = options;
@@ -98,6 +98,102 @@ const getAllPosts = async (
     data: result,
   };
 };
+
+const getAllPosts = async (
+  options: IPaginationOptions & { search?: string; currentUserId: number },
+  userId: string
+) => {
+  const { search } = options;
+
+  console.log(userId);
+
+  const searchFilters = searchFilter2(search as string);
+
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+
+  const result = await prisma.post.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    where: {
+      ...searchFilters,
+      isDeleted: false,
+    },
+    take: limit,
+    skip,
+    select: {
+      id: true,
+      title: true,
+      address: true,
+      image: true,
+      createdAt: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          profileImage: true,
+          profileStatus: true,
+        },
+      },
+      Like: {
+        take: 3,
+        orderBy: {
+          id: "desc",
+        },
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              profileImage: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          Like: true,
+          Comment: true,
+          Share: true,
+        },
+      },
+    },
+  });
+
+  const postsWithLikeStatus = await Promise.all(
+    result.map(async (post) => {
+      const like = await prisma.like.findFirst({
+        where: {
+          postId: post.id,
+          userId: userId,
+        },
+      });
+
+      return {
+        ...post,
+        isLike: like ? true : false,
+      };
+    })
+  );
+
+  const total = await prisma.post.count({
+    where: {
+      ...searchFilters,
+      isDeleted: false,
+    },
+  });
+
+  return {
+    meta: {
+      total,
+      page,
+      limit,
+    },
+    data: postsWithLikeStatus,
+  };
+};
+
 
 const getSinglePost = async (id: string) => {
   const post = await prisma.post.findUnique({
