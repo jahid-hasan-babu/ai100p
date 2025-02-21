@@ -43,11 +43,12 @@ model User {
   updatedAt      DateTime         @updatedAt
 
   // Relationships
-  Post    Post[]
-  Like    Like[]
-  Comment Comment[]
-  Share   Share[]
-  Report  Report[]
+  Post      Post[]
+  Like      Like[]
+  Comment   Comment[]
+  Share     Share[]
+  Report    Report[]
+  SavedPost SavedPost[]
 
   @@map("users")
 }
@@ -75,11 +76,12 @@ model Post {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  user    User      @relation(fields: [userId], references: [id])
-  Like    Like[]
-  Comment Comment[]
-  Share   Share[]
-  Report  Report[]
+  user      User        @relation(fields: [userId], references: [id])
+  Like      Like[]
+  Comment   Comment[]
+  Share     Share[]
+  Report    Report[]
+  SavedPost SavedPost[]
 
   @@map("posts")
 }
@@ -136,6 +138,19 @@ model Report {
   post Post @relation(fields: [postId], references: [id])
 
   @@map("reports")
+}
+
+model SavedPost {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  postId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@map("savedPosts")
 }
 
 enum UserRoleEnum {
