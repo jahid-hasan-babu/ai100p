@@ -5,6 +5,8 @@ import { PostRouters } from "../modules/post/post.routes";
 import { LikeRouters } from "../modules/like/like.routes";
 import { CommentRouters } from "../modules/comment/comment.routes";
 import { ShareRouters } from "../modules/share/share.routes";
+import { SavedPostRouters } from "../modules/savedPost/save.routes";
+import { ChatRouters } from "../modules/chat/chat.route";
 
 const router = express.Router();
 
@@ -32,6 +34,14 @@ const moduleRoutes = [
   {
     path: "/shares",
     route: ShareRouters,
+  },
+  {
+    path: "/saved",
+    route: SavedPostRouters,
+  },
+  {
+    path: "/chats",
+    route: ChatRouters,
   },
 ];
 

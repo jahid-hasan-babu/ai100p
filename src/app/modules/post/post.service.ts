@@ -2,10 +2,10 @@ import prisma from "../../utils/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
 import { fileUploader } from "../../helpers/fileUploader";
-import { paginationHelper } from "../../../helpars/paginationHelper";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { searchFilter2 } from "../../utils/searchFilter";
-import { deleteFromS3ByUrl } from "../../../helpars/fileDeletedFromS3";
+import { deleteFromS3ByUrl } from "../../../helpers/fileDeletedFromS3";
 
 const createPost = async (userId: string, payload: any, files: any) => {
   let image = null;

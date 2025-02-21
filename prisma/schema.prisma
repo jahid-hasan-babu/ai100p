@@ -24,7 +24,7 @@ model User {
   profileImage   String?
   bio            String?
   dateOfBirth    String?
-  gender         Gneder?
+  gender         Gender?
   locationLat    Float?
   locationLong   Float?
   website        String?
@@ -43,11 +43,15 @@ model User {
   updatedAt      DateTime         @updatedAt
 
   // Relationships
-  Post    Post[]
-  Like    Like[]
-  Comment Comment[]
-  Share   Share[]
-  Report  Report[]
+  Post      Post[]
+  Like      Like[]
+  Comment   Comment[]
+  Share     Share[]
+  Report    Report[]
+  SavedPost SavedPost[]
+  messages       Message[]       @relation("UserMessages")
+  conversations  Conversation[]  @relation("User1Conversations")
+  conversations2 Conversation[]  @relation("User2Conversations")
 
   @@map("users")
 }
@@ -75,11 +79,12 @@ model Post {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  user    User      @relation(fields: [userId], references: [id])
-  Like    Like[]
-  Comment Comment[]
-  Share   Share[]
-  Report  Report[]
+  user      User        @relation(fields: [userId], references: [id])
+  Like      Like[]
+  Comment   Comment[]
+  Share     Share[]
+  Report    Report[]
+  SavedPost SavedPost[]
 
   @@map("posts")
 }
@@ -138,6 +143,62 @@ model Report {
   @@map("reports")
 }
 
+model SavedPost {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  postId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@map("savedPosts")
+}
+
+model Conversation {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  user1Id   String    @db.ObjectId
+  user2Id   String    @db.ObjectId
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relationships
+  messages  Message[] @relation("ConversationMessages")
+  user1 User @relation("User1Conversations", fields: [user1Id], references: [id])
+  user2 User @relation("User2Conversations", fields: [user2Id], references: [id])
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String   @db.ObjectId
+  senderId       String   @db.ObjectId
+  receiverId     String   @db.ObjectId
+  content        String?
+  file           String?
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relationships
+  sender       User         @relation("UserMessages", fields: [senderId], references: [id])
+  conversation Conversation @relation("ConversationMessages", fields: [conversationId], references: [id])
+
+  @@map("messages")
+}
+
+model generateFile {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  file      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("generateFiles")
+}
+
 enum UserRoleEnum {
   USER
   SELLER
@@ -157,7 +218,7 @@ enum ProfileStatus {
   NEW
 }
 
-enum Gneder {
+enum Gender {
   MALE
   FEMALE
   OTHER

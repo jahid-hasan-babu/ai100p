@@ -1,9 +1,14 @@
 import prisma from "../../utils/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
+import { IPaginationOptions } from "../../interface/pagination.type";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 
-const createComment = async (payload: { comment: string }, userId: string, postId: string) => {
-  
+const createComment = async (
+  payload: { comment: string },
+  userId: string,
+  postId: string
+) => {
   const existingPost = await prisma.post.findUnique({
     where: {
       id: postId,
@@ -23,13 +28,20 @@ const createComment = async (payload: { comment: string }, userId: string, postI
     },
   });
   return comment;
-}
+};
 
-const getAllComments = async (postId: string) => {
+const getAllComments = async (postId: string, options: IPaginationOptions) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+
   const comments = await prisma.comment.findMany({
     where: {
       postId: postId,
     },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: limit,
+    skip,
     include: {
       user: {
         select: {
@@ -40,7 +52,18 @@ const getAllComments = async (postId: string) => {
       },
     },
   });
-  return comments;
+  return {
+    meta: {
+      total: await prisma.comment.count({
+        where: {
+          postId: postId,
+        },
+      }),
+      page,
+      limit,
+    },
+    data: comments,
+  };
 };
 
 const updateComment = async (

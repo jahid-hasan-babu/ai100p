@@ -8,7 +8,7 @@ import { generateToken } from "../../utils/generateToken";
 import { Secret } from "jsonwebtoken";
 import config from "../../../config";
 import { fileUploader } from "../../helpers/fileUploader";
-import { paginationHelper } from "../../../helpars/paginationHelper";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { searchFilter } from "../../utils/searchFilter";
 

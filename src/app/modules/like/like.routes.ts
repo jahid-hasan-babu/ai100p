@@ -1,7 +1,7 @@
 import express from "express";
 import auth from "../../middlewares/auth";
 import { LikeControllers } from "./like.controller";
-import parseBodyData from "../../../helpars/parseBodyData";
+import parseBodyData from "../../../helpers/parseBodyData";
 const router = express.Router();
 
 router.post(

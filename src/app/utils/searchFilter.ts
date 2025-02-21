@@ -1,14 +1,19 @@
-// export const searchFilter = (search: string | null) => {
-//   if (!search) {
-//     return undefined;
-//   }
+export const userFilter = (user: string | null) => {
+  if (!user) {
+    return undefined;
+  }
 
-//   return {
-//     status: {
-//       equals: search as any, // Cast `search` to match enum type
-//     },
-//   };
-// };
+  const filters: any = {};
+
+  if (user) {
+    filters.OR = [
+      { name: { contains: user, mode: "insensitive" } },
+      { userName: { contains: user, mode: "insensitive" } },
+    ];
+  }
+
+  return filters;
+};
 
 export const searchFilter = (search: string | null) => {
   if (!search) {
@@ -43,4 +48,3 @@ export const searchFilter2 = (search: string | null) => {
 
   return filters;
 };
-

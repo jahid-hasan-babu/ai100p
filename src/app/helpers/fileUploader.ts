@@ -55,12 +55,13 @@ interface UploadResponse {
 }
 const upload = multer({ storage: storage });
 
-const uploadmultipeImage = upload.fields([
+const uploadMultipleImage = upload.fields([
   { name: "profileImage", maxCount: 1 },
   { name: "certificate", maxCount: 1 },
 ]);
 
 const uploadPostImage = upload.single("image");
+const uploadFile = upload.single("file");
 
 // Configure DigitalOcean Spaces
 export const s3Client = new S3Client({
@@ -119,7 +120,8 @@ const uploadToDigitalOcean = async (
 };
 export const fileUploader = {
   upload,
-  uploadmultipeImage,
+  uploadMultipleImage,
   uploadToDigitalOcean,
   uploadPostImage,
+  uploadFile,
 };

@@ -2,12 +2,12 @@ import express from "express";
 import auth from "../../middlewares/auth";
 import { UserControllers } from "./user.controller";
 import { fileUploader } from "../../helpers/fileUploader";
-import parseBodyData from "../../../helpars/parseBodyData";
+import parseBodyData from "../../../helpers/parseBodyData";
 const router = express.Router();
 
 router.post(
   "/register",
-  fileUploader.uploadmultipeImage,
+  fileUploader.uploadMultipleImage,
   parseBodyData,
   UserControllers.registerUser
 );
@@ -21,7 +21,7 @@ router.get("/me", auth(), UserControllers.getMyProfile);
 router.get("/:id", auth(), UserControllers.getUserDetails);
 router.put(
   "/update-profile",
-  fileUploader.uploadmultipeImage,
+  fileUploader.uploadMultipleImage,
   parseBodyData,
   auth("USER", "ADMIN", "SELLER"),
   UserControllers.updateMyProfile

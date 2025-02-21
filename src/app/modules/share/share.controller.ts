@@ -20,7 +20,12 @@ const sharePost = catchAsync(async (req: Request, res: Response) => {
 const getMyPostShareList = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const postId = req.params.id;
-  const result = await ShareServices.getMyPostShareList(userId, postId);
+  const options = req.query;
+  const result = await ShareServices.getMyPostShareList(
+    userId,
+    postId,
+    options
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
