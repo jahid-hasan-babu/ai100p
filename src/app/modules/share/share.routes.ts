@@ -6,4 +6,6 @@ const router = express.Router();
 
 router.post("/:id", auth(), ShareControllers.sharePost);
 
+router.get("/:id", auth(), ShareControllers.getMyPostShareList);
+
 export const ShareRouters = router;

@@ -25,6 +25,54 @@ const createShare = async (userId: string, postId: string) => {
   return result
 }
 
+const getMyPostShareList = async (userId: string, postId: string) => {
+  const result = await prisma.share.findMany({
+    where: {
+      postId: postId,
+    },
+    select: {
+      post: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const matchedUser = result.find((item) => item.post.user.id == userId);
+  if (!matchedUser) {
+    throw new ApiError(httpStatus.FORBIDDEN, "You don't have permission");
+  }
+
+  const sahre = await prisma.share.findMany({
+    where: {
+      postId: postId,
+    },
+    select: {
+      post: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              profileImage: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return sahre;
+};
+
 export const ShareServices = {
-  createShare
+  createShare,
+  getMyPostShareList,
 };
