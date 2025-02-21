@@ -26,3 +26,21 @@ export const searchFilter = (search: string | null) => {
 
   return filters;
 };
+
+export const searchFilter2 = (search: string | null) => {
+  if (!search) {
+    return undefined;
+  }
+
+  const filters: any = {};
+
+  if (search) {
+    filters.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { address: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  return filters;
+};
+

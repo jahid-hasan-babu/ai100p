@@ -35,7 +35,36 @@ const createPost = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllPosts = catchAsync(async (req: Request, res: Response) => {
+  const options = pickValidFields(req.query, [
+    "limit",
+    "page",
+    "user",
+    "search",
+  ]);
+
+  const result = await PostServices.getAllPosts(options);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Posts Retrieve successfully",
+    data: result,
+  });
+});
+
+const getSinglePost = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const result = await PostServices.getSinglePost(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Post Retrieve successfully",
+    data: result,
+  });
+});
 
 export const PostControllers = {
   createPost,
+  getAllPosts,
+  getSinglePost,
 };
