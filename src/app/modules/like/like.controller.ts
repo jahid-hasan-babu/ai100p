@@ -18,6 +18,17 @@ const createLike = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllLikes = catchAsync(async (req: Request, res: Response) => {
+  const postId = req.params.id;
+  const result = await LikeServices.getAllLikeWithUser(postId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Likes retrieved successfully",
+    data: result,
+  });
+});
+
 const removeLike = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const postId = req.params.id;
@@ -28,9 +39,10 @@ const removeLike = catchAsync(async (req: Request, res: Response) => {
     message: "Like removed successfully",
     data: result,
   });
-})
+});
 
 export const LikeControllers = {
   createLike,
+  getAllLikes,
   removeLike,
 };

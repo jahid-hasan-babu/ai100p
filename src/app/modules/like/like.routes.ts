@@ -18,4 +18,6 @@ router.delete(
   LikeControllers.removeLike
 );
 
+router.get("/getAll-like/:id", parseBodyData, LikeControllers.getAllLikes);
+
 export const LikeRouters = router;

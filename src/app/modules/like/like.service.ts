@@ -25,14 +25,32 @@ const createLike = async (userId: string, postId: string) => {
   return like;
 };
 
-const removeLike = async (userId: string, postId: string) => {
+const getAllLikeWithUser = async (postId: string) => {
+  const like = await prisma.like.findMany({
+    where: { postId: postId },
+    select: {
+      id: true,
+      userId: true,
+      postId: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          profileImage: true,
+        },
+      },
+    },
+  });
+  return like;
+};
 
+const removeLike = async (userId: string, postId: string) => {
   const existingLike = await prisma.like.findFirst({
     where: {
       userId: userId,
-      postId: postId
+      postId: postId,
     },
-  })
+  });
 
   if (!existingLike) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Like not found");
@@ -47,5 +65,6 @@ const removeLike = async (userId: string, postId: string) => {
 
 export const LikeServices = {
   createLike,
+  getAllLikeWithUser,
   removeLike,
 };
