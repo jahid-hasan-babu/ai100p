@@ -20,7 +20,8 @@ const createLike = catchAsync(async (req: Request, res: Response) => {
 
 const getAllLikes = catchAsync(async (req: Request, res: Response) => {
   const postId = req.params.id;
-  const result = await LikeServices.getAllLikeWithUser(postId);
+  const options = req.query;
+  const result = await LikeServices.getAllLikeWithUser(postId, options);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

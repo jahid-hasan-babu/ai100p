@@ -68,7 +68,6 @@ const getMySavedPost = async (
       }),
       page,
       limit,
-      skip,
     },
     data: savedPost,
   };

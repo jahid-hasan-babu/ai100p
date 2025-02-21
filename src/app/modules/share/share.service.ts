@@ -1,7 +1,8 @@
 import prisma from "../../utils/prisma";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
-
+import { IPaginationOptions } from "../../interface/pagination.type";
+import { paginationHelper } from "../../../helpars/paginationHelper";
 
 const createShare = async (userId: string, postId: string) => {
   const existingPost = await prisma.post.findUnique({
@@ -20,12 +21,17 @@ const createShare = async (userId: string, postId: string) => {
       userId: userId,
       postId: postId,
     },
-  })
+  });
 
-  return result
-}
+  return result;
+};
 
-const getMyPostShareList = async (userId: string, postId: string) => {
+const getMyPostShareList = async (
+  userId: string,
+  postId: string,
+  options: IPaginationOptions
+) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const result = await prisma.share.findMany({
     where: {
       postId: postId,
@@ -49,10 +55,15 @@ const getMyPostShareList = async (userId: string, postId: string) => {
     throw new ApiError(httpStatus.FORBIDDEN, "You don't have permission");
   }
 
-  const sahre = await prisma.share.findMany({
+  const share = await prisma.share.findMany({
     where: {
       postId: postId,
     },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: limit,
+    skip,
     select: {
       post: {
         select: {
@@ -69,7 +80,18 @@ const getMyPostShareList = async (userId: string, postId: string) => {
     },
   });
 
-  return sahre;
+  return {
+    meta: {
+      total: await prisma.share.count({
+        where: {
+          userId: userId,
+        },
+      }),
+      page,
+      limit,
+    },
+    share,
+  };
 };
 
 export const ShareServices = {

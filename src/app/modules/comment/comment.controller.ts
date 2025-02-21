@@ -20,7 +20,8 @@ const createComment = catchAsync(async (req: Request, res: Response) => {
 
 const getAllComments = catchAsync(async (req: Request, res: Response) => {
   const postId = req.params.id;
-  const result = await CommentServices.getAllComments(postId);
+  const options = req.query;
+  const result = await CommentServices.getAllComments(postId, options);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
