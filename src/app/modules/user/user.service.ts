@@ -279,6 +279,7 @@ const getMyProfileFromDB = async (id: string) => {
         select: {
           followers: true,
           following: true,
+          Post: true,
         },
       },
     },
@@ -287,48 +288,6 @@ const getMyProfileFromDB = async (id: string) => {
   return Profile;
 };
 
-const getUserDetailsFromDB1 = async (id: string) => {
-  const existingUser = await prisma.user.findUnique({
-    where: { id },
-  });
-
-  if (!existingUser) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-  }
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      status: true,
-      profileImage: true,
-      profileStatus: true,
-      bio: true,
-      dateOfBirth: true,
-      gender: true,
-      phone: true,
-      website: true,
-      facebook: true,
-      twitter: true,
-      instagram: true,
-      tikTok: true,
-      youtube: true,
-      locationLat: true,
-      locationLong: true,
-      createdAt: true,
-      updatedAt: true,
-      _count: {
-        select: {
-          followers: true,
-          following: true,
-        },
-      },
-    },
-  });
-  return user;
-};
 const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
   const existingUser = await prisma.user.findUnique({
     where: { id },
@@ -374,6 +333,7 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
         select: {
           followers: true,
           following: true,
+          Post: true,
         },
       },
     },
