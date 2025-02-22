@@ -52,7 +52,7 @@ model User {
   messages       Message[]      @relation("UserMessages")
   conversations  Conversation[] @relation("User1Conversations")
   conversations2 Conversation[] @relation("User2Conversations")
-  users          Follower[]     @relation("UserFollowers")
+  following      Follower[]     @relation("UserFollowers")
   followers      Follower[]     @relation("FollowerList")
 
   @@map("users")
