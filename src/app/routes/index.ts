@@ -7,6 +7,7 @@ import { CommentRouters } from "../modules/comment/comment.routes";
 import { ShareRouters } from "../modules/share/share.routes";
 import { SavedPostRouters } from "../modules/savedPost/save.routes";
 import { ChatRouters } from "../modules/chat/chat.route";
+import { FollowRouters } from "../modules/follow/follow.routes";
 
 const router = express.Router();
 
@@ -42,6 +43,10 @@ const moduleRoutes = [
   {
     path: "/chats",
     route: ChatRouters,
+  },
+  {
+    path: "/follows",
+    route: FollowRouters,
   },
 ];
 

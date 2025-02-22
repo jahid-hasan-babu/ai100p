@@ -43,15 +43,17 @@ model User {
   updatedAt      DateTime         @updatedAt
 
   // Relationships
-  Post      Post[]
-  Like      Like[]
-  Comment   Comment[]
-  Share     Share[]
-  Report    Report[]
-  SavedPost SavedPost[]
-  messages       Message[]       @relation("UserMessages")
-  conversations  Conversation[]  @relation("User1Conversations")
-  conversations2 Conversation[]  @relation("User2Conversations")
+  Post           Post[]
+  Like           Like[]
+  Comment        Comment[]
+  Share          Share[]
+  Report         Report[]
+  SavedPost      SavedPost[]
+  messages       Message[]      @relation("UserMessages")
+  conversations  Conversation[] @relation("User1Conversations")
+  conversations2 Conversation[] @relation("User2Conversations")
+  users          Follower[]     @relation("UserFollowers")
+  followers      Follower[]     @relation("FollowerList")
 
   @@map("users")
 }
@@ -157,16 +159,16 @@ model SavedPost {
 }
 
 model Conversation {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  user1Id   String    @db.ObjectId
-  user2Id   String    @db.ObjectId
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  user1Id   String   @db.ObjectId
+  user2Id   String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relationships
-  messages  Message[] @relation("ConversationMessages")
-  user1 User @relation("User1Conversations", fields: [user1Id], references: [id])
-  user2 User @relation("User2Conversations", fields: [user2Id], references: [id])
+  messages Message[] @relation("ConversationMessages")
+  user1    User      @relation("User1Conversations", fields: [user1Id], references: [id])
+  user2    User      @relation("User2Conversations", fields: [user2Id], references: [id])
 
   @@map("conversations")
 }
@@ -197,6 +199,20 @@ model generateFile {
   updatedAt DateTime @updatedAt
 
   @@map("generateFiles")
+}
+
+model Follower {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  followerId  String   @db.ObjectId
+  followingId String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  follower  User @relation("UserFollowers", fields: [followerId], references: [id])
+  following User @relation("FollowerList", fields: [followingId], references: [id])
+
+  @@map("followers")
 }
 
 enum UserRoleEnum {
