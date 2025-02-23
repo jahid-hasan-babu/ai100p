@@ -8,6 +8,7 @@ import { ShareRouters } from "../modules/share/share.routes";
 import { SavedPostRouters } from "../modules/savedPost/save.routes";
 import { ChatRouters } from "../modules/chat/chat.route";
 import { FollowRouters } from "../modules/follow/follow.routes";
+import { ReportRouters } from "../modules/report/report.routes";
 
 const router = express.Router();
 
@@ -47,6 +48,10 @@ const moduleRoutes = [
   {
     path: "/follows",
     route: FollowRouters,
+  },
+  {
+    path: "/reports",
+    route: ReportRouters,
   },
 ];
 

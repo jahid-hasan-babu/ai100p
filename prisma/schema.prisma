@@ -54,6 +54,7 @@ model User {
   conversations2 Conversation[] @relation("User2Conversations")
   following      Follower[]     @relation("UserFollowers")
   followers      Follower[]     @relation("FollowerList")
+  Service        Service[]
 
   @@map("users")
 }
@@ -132,15 +133,19 @@ model Share {
 }
 
 model Report {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  postId    String   @db.ObjectId
-  reason    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  postId      String?  @db.ObjectId
+  serviceId   String?  @db.ObjectId
+  reason      String?
+  reportImage String?
+  reportVideo String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
-  post Post @relation(fields: [postId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+  post    Post?    @relation(fields: [postId], references: [id])
+  service Service? @relation(fields: [serviceId], references: [id])
 
   @@map("reports")
 }
@@ -213,6 +218,19 @@ model Follower {
   following User @relation("FollowerList", fields: [followingId], references: [id])
 
   @@map("followers")
+}
+
+model Service {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String?
+  userId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  report    Report[]
+  // relation
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("services")
 }
 
 enum UserRoleEnum {
