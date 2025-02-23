@@ -9,6 +9,8 @@ import { SavedPostRouters } from "../modules/savedPost/save.routes";
 import { ChatRouters } from "../modules/chat/chat.route";
 import { FollowRouters } from "../modules/follow/follow.routes";
 import { ReportRouters } from "../modules/report/report.routes";
+import path from "path";
+import { FavoriteRouters } from "../modules/favorite/favorite.routes";
 
 const router = express.Router();
 
@@ -52,6 +54,10 @@ const moduleRoutes = [
   {
     path: "/reports",
     route: ReportRouters,
+  },
+  {
+    path: "/favorites",
+    route: FavoriteRouters,
   },
 ];
 
