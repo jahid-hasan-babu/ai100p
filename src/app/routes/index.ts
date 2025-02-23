@@ -12,6 +12,7 @@ import { ReportRouters } from "../modules/report/report.routes";
 import path from "path";
 import { FavoriteRouters } from "../modules/favorite/favorite.routes";
 import { ServiceRouters } from "../modules/service/service.routes";
+import { ReviewRouters } from "../modules/review/review.routes";
 
 const router = express.Router();
 
@@ -63,6 +64,10 @@ const moduleRoutes = [
   {
     path: "/services",
     route: ServiceRouters,
+  },
+  {
+    path: "/reviews",
+    route: ReviewRouters,
   },
 ];
 

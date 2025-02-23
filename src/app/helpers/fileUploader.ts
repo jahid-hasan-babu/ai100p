@@ -174,6 +174,7 @@ const uploadReportImage = upload.fields([
 const uploadServiceImage = upload.array("serviceImage", 5);
 const uploadPostImage = upload.single("image");
 const uploadFile = upload.single("file");
+const uploadReviewFile = upload.single("reviewFile");
 
 // Configure DigitalOcean Spaces (S3-compatible)
 export const s3Client = new S3Client({
@@ -308,4 +309,5 @@ export const fileUploader = {
   uploadReportImage,
   abortMultipartUpload,
   uploadServiceImage,
+  uploadReviewFile,
 };
