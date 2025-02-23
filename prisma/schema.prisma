@@ -57,6 +57,7 @@ model User {
   Service        Service[]
   users          Favorite[]     @relation("UserFavorites")
   artist         Favorite[]     @relation("ArtistFavorites")
+  user           Review[]       @relation("UserReviews")
 
   @@map("users")
 }
@@ -223,14 +224,25 @@ model Follower {
 }
 
 model Service {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String?
-  userId    String   @db.ObjectId
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  report    Report[]
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  title        String?
+  price        Float?
+  serviceImage Json[]
+  date         String
+  time         Json[]
+  location     String
+  about        String
+  locationLat  Float?
+  locationLong Float?
+  isDeleted    Boolean  @default(false)
+  userId       String   @db.ObjectId
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  report       Report[]
+
   // relation
-  user      User     @relation(fields: [userId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+  review  Review[] @relation("ServiceReviews")
 
   @@map("services")
 }
@@ -247,6 +259,23 @@ model Favorite {
   artist User @relation("ArtistFavorites", fields: [artistId], references: [id])
 
   @@map("favorites")
+}
+
+model Review {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  serviceId  String   @db.ObjectId
+  rating     Float?
+  reviewFile String?
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relationships
+  user    User    @relation("UserReviews", fields: [userId], references: [id])
+  service Service @relation("ServiceReviews", fields: [serviceId], references: [id])
+
+  @@map("reviews")
 }
 
 enum UserRoleEnum {

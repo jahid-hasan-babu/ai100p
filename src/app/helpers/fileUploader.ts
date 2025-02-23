@@ -170,6 +170,8 @@ const uploadReportImage = upload.fields([
   { name: "reportImage", maxCount: 1 },
 ]);
 
+
+const uploadServiceImage = upload.array("serviceImage", 5);
 const uploadPostImage = upload.single("image");
 const uploadFile = upload.single("file");
 
@@ -305,4 +307,5 @@ export const fileUploader = {
   uploadFile,
   uploadReportImage,
   abortMultipartUpload,
+  uploadServiceImage,
 };
