@@ -51,5 +51,7 @@ router.put(
   UserControllers.changePassword
 );
 
+router.post("/social-login", UserControllers.socialLogin);
+
 
 export const UserRouters = router;

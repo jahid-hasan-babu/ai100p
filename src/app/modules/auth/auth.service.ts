@@ -145,7 +145,7 @@ const loginUserFromDB = async (payload: {
     name: userData.name,
     userName: userData.userName,
     profileImage: userData.profileImage,
-    ProfileStatus: userData.profileStatus,
+    profileStatus: userData.profileStatus,
     email: userData.email,
     locationLat: userData.locationLat,
     locationLong: userData.locationLong,

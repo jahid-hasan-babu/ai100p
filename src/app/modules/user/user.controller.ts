@@ -62,8 +62,9 @@ const getMyProfile = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getUserDetails = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const result = await UserServices.getUserDetailsFromDB(id);
+  const id = req.user.id;
+  const currentUserID = req.params.id;
+  const result = await UserServices.getUserDetailsFromDB(id, currentUserID);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -131,6 +132,16 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const socialLogin = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body;
+  const result = await UserServices.socialLogin(payload);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "User logged in successfully",
+    data: result,
+  });
+});
+
 export const UserControllers = {
   registerUser,
   getAllUsers,
@@ -142,4 +153,5 @@ export const UserControllers = {
   deleteUser,
   notificationPermission,
   changePassword,
+  socialLogin,
 };
