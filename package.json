@@ -53,6 +53,7 @@
     "nodemailer": "^6.9.15",
     "nodemailer-smtp-transport": "^2.7.4",
     "stripe": "^17.5.0",
+    "twilio": "^5.4.5",
     "ws": "^8.18.0",
     "zod": "^3.23.8"
   }

@@ -4,24 +4,17 @@ import { authValidation } from "./auth.validation";
 import { AuthControllers } from "./auth.controller";
 const router = express.Router();
 
+
+
+router.post("/verify-phone", AuthControllers.sendOtp);
+
 router.post(
-  '/login',
+  "/login",
   validateRequest(authValidation.loginUser),
-  AuthControllers.loginUser,
+  AuthControllers.loginUser
 );
 
-
-router.post(
-  "/forgot-password",
-  validateRequest(authValidation.forgotPassword),
-  AuthControllers.forgotPassword
-);
-
-router.post(
-  "/verify-otp",
-  validateRequest(authValidation.verifyOtp),
-  AuthControllers.verifyOtp
-);
+router.post("/verify-otp", AuthControllers.verifyOtpMessage);
 
 router.post(
   "/change-password",

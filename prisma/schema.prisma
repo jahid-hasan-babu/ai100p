@@ -64,14 +64,15 @@ model User {
 
 model Otp {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  email     String
-  otp       Int?
+  phone     String?   @unique
+  otp       String?
   expiry    DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
   @@map("otps")
 }
+
 
 model Post {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -277,6 +278,8 @@ model Review {
 
   @@map("reviews")
 }
+
+
 
 enum UserRoleEnum {
   USER

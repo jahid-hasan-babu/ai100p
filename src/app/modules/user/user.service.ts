@@ -17,6 +17,8 @@ interface UserWithOptionalPassword extends Omit<User, "password"> {
   password?: string;
 }
 
+
+
 const registerUserIntoDB = async (payload: any, files: any) => {
   const hashedPassword: string = await bcrypt.hash(
     payload.password,
