@@ -35,6 +35,24 @@ const verifyOtpMessage = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const forgetPassword = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthServices.forgetPassword(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Otp sent successfully",
+    data: result,
+  });
+});
+
+const verifyOTP = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthServices.verifyOtp(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Otp verified successfully",
+    data: result,
+  });
+});
+
 const changePassword = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
   const result = await AuthServices.changePassword(payload);
@@ -50,5 +68,7 @@ export const AuthControllers = {
   loginUser,
   sendOtp,
   verifyOtpMessage,
+  forgetPassword,
+  verifyOTP,
   changePassword,
 };

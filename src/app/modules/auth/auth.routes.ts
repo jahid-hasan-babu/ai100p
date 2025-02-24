@@ -16,11 +16,11 @@ router.post(
 
 router.post("/verify-otp", AuthControllers.verifyOtpMessage);
 
-router.post(
-  "/change-password",
-  validateRequest(authValidation.changePassword),
-  AuthControllers.changePassword
-);
+router.post("/forgetPassword", AuthControllers.forgetPassword);
+
+router.post("/verify-forget-otp", AuthControllers.verifyOTP);
+
+router.post("/change-password", AuthControllers.changePassword);
 
 
 export const AuthRouters = router;
