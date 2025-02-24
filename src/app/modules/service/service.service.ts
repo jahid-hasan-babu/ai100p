@@ -94,10 +94,15 @@ const getAllServices = async (
   const { search } = options;
   const searchFilters = search ? searchFilter3(search) : {};
 
+  const todayDate = new Date().toISOString().split("T")[0];
+
   const services = await prisma.service.findMany({
     where: {
       isDeleted: false,
       ...searchFilters,
+      date: {
+        gte: todayDate,
+      },
     },
     skip: skip,
     take: limit,
@@ -127,7 +132,7 @@ const getAllServices = async (
   return {
     meta: {
       total: await prisma.service.count({
-        where: {  ...searchFilters, isDeleted: false },
+        where: { ...searchFilters, isDeleted: false },
       }),
       page,
       limit,
@@ -135,6 +140,9 @@ const getAllServices = async (
     data: servicesWithRatings,
   };
 };
+
+
+
 
 const updateService = async (
   serviceId: string,
