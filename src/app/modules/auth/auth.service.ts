@@ -10,7 +10,7 @@ import jwt from "jsonwebtoken";
 
 const sendOtpMessage = async (payload: any) => {
   const client = Twilio(config.twilio.accountSid, config.twilio.authToken);
-  const OTP_EXPIRY_TIME = 2 * 60 * 1000; // ✅ 2 minutes in milliseconds (120,000 ms)
+  const OTP_EXPIRY_TIME = 2 * 60 * 1000; 
 
   const { phone } = payload;
 
