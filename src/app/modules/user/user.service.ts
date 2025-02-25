@@ -11,13 +11,11 @@ import { fileUploader } from "../../helpers/fileUploader";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { searchFilter } from "../../utils/searchFilter";
-
+import { getDistance } from "geolib";
 
 interface UserWithOptionalPassword extends Omit<User, "password"> {
   password?: string;
 }
-
-
 
 const registerUserIntoDB = async (payload: any, files: any) => {
   const hashedPassword: string = await bcrypt.hash(
@@ -290,6 +288,78 @@ const getMyProfileFromDB = async (id: string) => {
   return Profile;
 };
 
+// const getUserDetailsFromDB1 = async (id: string, currentUserId: string) => {
+//   const existingUser = await prisma.user.findUnique({
+//     where: { id },
+//   });
+
+//   if (!existingUser) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+//   }
+
+//   // Check if the current user follows the target user
+//   const isFollow = await prisma.follower.findFirst({
+//     where: {
+//       followerId: currentUserId,
+//       followingId: id,
+//     },
+//   });
+
+//   const user = await prisma.user.findUniqueOrThrow({
+//     where: { id },
+//     select: {
+//       id: true,
+//       name: true,
+//       email: true,
+//       role: true,
+//       status: true,
+//       profileImage: true,
+//       profileStatus: true,
+//       bio: true,
+//       dateOfBirth: true,
+//       gender: true,
+//       phone: true,
+//       website: true,
+//       facebook: true,
+//       twitter: true,
+//       instagram: true,
+//       tikTok: true,
+//       youtube: true,
+//       locationLat: true,
+//       locationLong: true,
+//       createdAt: true,
+//       updatedAt: true,
+//       Service: {
+//         select: {
+//           id: true,
+//           serviceImage: true,
+//           title: true,
+//           price: true,
+//           review: {
+//             select: {
+//               rating: true,
+//               _count: {
+//                 select: {
+//                   review: true,
+//                 },
+//               },
+//             },
+//           },
+//         },
+//       },
+//       _count: {
+//         select: {
+//           followers: true,
+//           following: true,
+//           Post: true,
+//         },
+//       },
+//     },
+//   });
+
+//   return { ...user, isFollow: !!isFollow };
+// };
+
 const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
   const existingUser = await prisma.user.findUnique({
     where: { id },
@@ -304,6 +374,15 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
     where: {
       followerId: currentUserId,
       followingId: id,
+    },
+  });
+
+  // Get current user's location
+  const user1 = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: {
+      locationLat: true,
+      locationLong: true,
     },
   });
 
@@ -331,6 +410,20 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
       locationLong: true,
       createdAt: true,
       updatedAt: true,
+      Service: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 8, // Limit services to 8
+        select: {
+          id: true,
+          serviceImage: true,
+          title: true,
+          price: true,
+          locationLat: true,
+          locationLong: true,
+        },
+      },
       _count: {
         select: {
           followers: true,
@@ -341,8 +434,41 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
     },
   });
 
-  return { ...user, isFollow: !!isFollow }; // Add isFollow flag (true if exists, false otherwise)
+  // Compute review statistics and distance for each service
+  const servicesWithRatings = await Promise.all(
+    user.Service.map(async (service) => {
+      const ratingStats = await prisma.review.aggregate({
+        where: { serviceId: service.id },
+        _avg: { rating: true },
+        _count: { rating: true },
+      });
+
+      const distance =
+        getDistance(
+          {
+            latitude: user1?.locationLat ?? 0,
+            longitude: user1?.locationLong ?? 0,
+          },
+          {
+            latitude: service?.locationLat ?? 0,
+            longitude: service?.locationLong ?? 0,
+          }
+        ) / 1000; // Convert meters to km
+
+      return {
+        ...service,
+        distance,
+        reviewStats: {
+          averageRating: ratingStats._avg.rating || 0,
+          totalReviews: ratingStats._count.rating || 0,
+        },
+      };
+    })
+  );
+
+  return { ...user, Service: servicesWithRatings, isFollow: !!isFollow };
 };
+
 
 const updateMyProfileIntoDB = async (id: string, payload: any, files: any) => {
   const existingUser = await prisma.user.findUnique({
