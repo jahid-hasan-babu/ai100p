@@ -67,9 +67,17 @@ const declineBooking = catchAsync(async (req: Request, res: Response) => {
   });
 })
 
-
-
-
+const updateBookingStatus = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const payload = req.body;
+  const userId = req.user.id;
+  const result = await BookingServices.updateBookingStatus(userId, id, payload);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Booking status updated successfully",
+    data: result,
+  });
+});
 
 export const BookingControllers = {
   requestBooking,
@@ -78,4 +86,5 @@ export const BookingControllers = {
   getMySingleBookingAsSeller,
   acceptBooking,
   declineBooking,
+  updateBookingStatus,
 };

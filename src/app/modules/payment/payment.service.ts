@@ -158,6 +158,15 @@ const transferFundsWithStripe = async (userId: string, bookingId: string) => {
     },
   });
 
+  await prisma.booking.update({
+    where: {
+      id: bookingId,
+    },
+    data: {
+      status: "COMPLETED",
+    },
+  });
+
   const paymentIntent = await stripe.paymentIntents.retrieve(
     existingBooking?.paymentIntentId ?? ""
   );
@@ -185,7 +194,7 @@ const transferFundsWithStripe = async (userId: string, bookingId: string) => {
     );
   }
 
-  const transferAmount = Math.floor(amountReceived * 0.95);
+  const transferAmount = Math.floor(amountReceived * 0.9);
 
   const transfer = await stripe.transfers.create({
     amount: transferAmount,

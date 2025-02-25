@@ -211,34 +211,22 @@ const getMySingleBookingAsSeller = async (id: string) => {
 }
 
 
-const updateBookingStatus = async (id: string, data: any) => {
+const updateBookingStatus = async (
+  userId: string,
+  id: string,
+  payload: any
+) => {
   const result = await prisma.booking.update({
     where: { id },
     data: {
-      status: data.status,
-    },
-    select: {
-      id: true,
-      userId: true,
-      serviceId: true,
-      name: true,
-      age: true,
-      price: true,
-      time: true,
-      date: true,
-      bookingStatus: true,
-      paymentIntentId : true,
-      status: true,
-      user: {
-        select: {
-          id: true,
-          name: true,
-          profileImage: true,
-          isVerified: true,
-        },
-      },
+      status: payload.status,
     },
   });
+
+  if (payload.status === "COMPLETED") {
+    StripeServices.transferFundsWithStripe(userId, id);
+  }
+
   return result;
 };
 
@@ -254,7 +242,6 @@ const acceptBooking = async (id: string) => {
   if (!booking) {
     throw new ApiError(httpStatus.NOT_FOUND, "Booking not found");
   }
-
 
   const updatedBooking = await prisma.booking.update({
     where: { id },
@@ -292,20 +279,17 @@ const deliceBooking = async (id: string) => {
     }
   }
 
-
-const delicedBooking = await prisma.booking.update({
-  where: {
-    id,
-  },
-  data: {
-    status: "CANCELLED",
-  },
-});
+  const delicedBooking = await prisma.booking.update({
+    where: {
+      id,
+    },
+    data: {
+      status: "CANCELLED",
+    },
+  });
 
   return delicedBooking;
-
 };
-
 
 export const BookingServices = {
   requestBooking,
@@ -314,4 +298,5 @@ export const BookingServices = {
   getMySingleBookingAsSeller,
   acceptBooking,
   deliceBooking,
+  updateBookingStatus,
 };

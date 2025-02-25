@@ -20,5 +20,11 @@ router.post("/accept-booking/:id", auth(), BookingControllers.acceptBooking);
 
 router.post("/delice-booking/:id", auth(), BookingControllers.declineBooking);
 
+router.put(
+  "/update-status/:id",
+  auth(),
+  BookingControllers.updateBookingStatus
+);
+
 
 export const BookingRouters = router;
