@@ -6,21 +6,74 @@ import { paginationHelper } from "../../../helpers/paginationHelper";
 import { fileUploader } from "../../helpers/fileUploader";
 import {  searchFilter3 } from "../../utils/searchFilter";
 import { deleteFromS3ByUrl } from "../../../helpers/fileDeletedFromS3";
-
-
-
+import { StripeServices } from "../payment/payment.service";
+import { stripe } from "../../utils/stripe";
 
 const createService = async (payload: any, userId: string, files: any) => {
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (existingUser?.accountId === null) {
+    const stripeAccount = await stripe.accounts.create({
+      type: "express",
+      country: "US",
+      email: payload.email,
+      metadata: {
+        userId: existingUser.id,
+      },
+      capabilities: {
+        card_payments: { requested: true },
+        transfers: { requested: true },
+      },
+    });
+
+    if (!stripeAccount || !stripeAccount.id) {
+      throw new ApiError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to create a Stripe account"
+      );
+    }
+    let updateUser = await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        accountId: stripeAccount.id,
+      },
+    });
+
+    StripeServices.generateNewAccountLink(updateUser);
+
+    throw new ApiError(
+      httpStatus.TEMPORARY_REDIRECT,
+      "We sent you an onboarding URL. Please check your email."
+    );
+  } else if (existingUser?.accountId) {
+    const isaccount = await stripe.accounts.retrieve(
+      existingUser?.accountId as string
+    );
+    if (!isaccount.details_submitted || !isaccount.charges_enabled) {
+      await StripeServices.generateNewAccountLink(existingUser);
+      throw new ApiError(
+        httpStatus.TEMPORARY_REDIRECT,
+        "We sent you an onboarding URL. Please check your email."
+      );
+    }
+  }
+
   let serviceImage = [];
 
   if (files && files.length > 0) {
     const uploadResults = await Promise.all(
       files.map(async (file: any) => {
         const uploadResult = await fileUploader.uploadToDigitalOcean(file);
-        return uploadResult.Location; 
+        return uploadResult.Location;
       })
     );
-    serviceImage = uploadResults; 
+    serviceImage = uploadResults;
   }
 
   const result = await prisma.service.create({

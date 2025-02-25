@@ -342,8 +342,8 @@ const getAllCustomersFromStripe = async () => {
 const generateNewAccountLink = async (user: User) => {
   const accountLink = await stripe.accountLinks.create({
     account: user.accountId as string,
-    refresh_url: "https://your-platform.com/reauth",
-    return_url: "https://your-platform.com/return",
+    refresh_url: "https://success-page-xi.vercel.app/not-success",
+    return_url: "https://success-page-xi.vercel.app/success",
     type: "account_onboarding",
   });
   // console.log(accountLink.url, 'check account link');
