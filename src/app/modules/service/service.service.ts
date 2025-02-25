@@ -108,34 +108,55 @@ const getMyServices = async (
     },
   });
 
-  const servicesWithRatings = await Promise.all(
-    services.map(async (service) => {
-      const ratingStats = await prisma.review.aggregate({
-        where: { serviceId: service.id },
-        _avg: { rating: true },
-        _count: { rating: true },
-      });
+   const user = await prisma.user.findUnique({
+     where: { id: userId },
+     select: {
+       locationLat: true,
+       locationLong: true,
+     },
+   });
 
-      return {
-        ...service,
-        reviewStats: {
-          averageRating: ratingStats._avg.rating || 0,
-          totalReviews: ratingStats._count.rating || 0,
-        },
-      };
-    })
-  );
+   const servicesWithDistance = await Promise.all(
+     services.map(async (service) => {
+       const ratingStats = await prisma.review.aggregate({
+         where: { serviceId: service.id },
+         _avg: { rating: true },
+         _count: { rating: true },
+       });
 
-  return {
-    meta: {
-      total: await prisma.service.count({
-        where: { userId: userId, ...searchFilters, isDeleted: false },
-      }),
-      page,
-      limit,
-    },
-    data: servicesWithRatings,
-  };
+       const distance =
+         getDistance(
+           {
+             latitude: user?.locationLat ?? 0,
+             longitude: user?.locationLong ?? 0,
+           },
+           {
+             latitude: service.locationLat ?? 0,
+             longitude: service.locationLong ?? 0,
+           }
+         ) / 1000; // Convert meters to km
+
+       return {
+         ...service,
+         distance, // Add distance in km
+         reviewStats: {
+           averageRating: ratingStats._avg.rating || 0,
+           totalReviews: ratingStats._count.rating || 0,
+         },
+       };
+     })
+   );
+
+   return {
+     meta: {
+       total: await prisma.service.count({
+         where: { userId: userId, ...searchFilters, isDeleted: false },
+       }),
+       page,
+       limit,
+     },
+     data: servicesWithDistance,
+   };
 };
 
 const getAllServices1 = async (
@@ -269,10 +290,6 @@ const getAllServices = async (
     data: servicesWithDistance,
   };
 };
-
-
-
-
 
 const updateService = async (
   serviceId: string,
