@@ -12,10 +12,41 @@ import { paginationHelper } from "../../../helpers/paginationHelper";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { searchFilter } from "../../utils/searchFilter";
 import { getDistance } from "geolib";
+import cron from "node-cron";
 
 interface UserWithOptionalPassword extends Omit<User, "password"> {
   password?: string;
 }
+
+cron.schedule("0 12 * * *", async () => {
+  const newUsersToUpdate = await prisma.user.findMany({
+    where: {
+      profileStatus: "NEW",
+    },
+    select: {
+      id: true,
+      _count: {
+        select: { followers: true },
+      },
+    },
+  });
+
+  const usersToUpdate = newUsersToUpdate.filter(
+    (user) => user._count.followers > 10000
+  );
+
+  if (usersToUpdate.length > 0) {
+    await prisma.user.updateMany({
+      where: {
+        id: { in: usersToUpdate.map((user) => user.id) },
+      },
+      data: { profileStatus: "POPULAR" },
+    });
+  }
+});
+
+
+
 
 const registerUserIntoDB = async (payload: any, files: any) => {
   const hashedPassword: string = await bcrypt.hash(
