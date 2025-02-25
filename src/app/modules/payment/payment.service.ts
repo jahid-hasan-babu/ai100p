@@ -57,11 +57,10 @@ const authorizedPaymentWithSaveCardFromStripe = async (payload: {
   customerId: string;
   amount: number;
   paymentMethodId: string;
-  parcelId: string;
-  travelerAccountId: string;
+  bookingId: string;
 }) => {
   try {
-    const { customerId, paymentMethodId, amount, parcelId } = payload;
+    const { customerId, paymentMethodId, amount, bookingId } = payload;
 
     const attach = await stripe.paymentMethods.attach(paymentMethodId, {
       customer: customerId,
@@ -76,8 +75,11 @@ const authorizedPaymentWithSaveCardFromStripe = async (payload: {
       confirm: true,
     });
 
+    console.log(paymentIntent);
+
     if (paymentIntent.status === "succeeded") {
       // Step 2: Save payment and update booking in the database
+
       const payment = await prisma.payment.create({
         data: {
           paymentIntentId: paymentIntent.id,
@@ -90,7 +92,7 @@ const authorizedPaymentWithSaveCardFromStripe = async (payload: {
       });
 
       await prisma.booking.update({
-        where: { id: parcelId },
+        where: { id: bookingId },
         data: {
           paymentIntentId: paymentIntent.id,
           isPaid: true,
