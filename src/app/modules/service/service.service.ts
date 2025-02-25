@@ -8,6 +8,7 @@ import {  searchFilter3 } from "../../utils/searchFilter";
 import { deleteFromS3ByUrl } from "../../../helpers/fileDeletedFromS3";
 import { StripeServices } from "../payment/payment.service";
 import { stripe } from "../../utils/stripe";
+import { getDistance } from "geolib";
 
 const createService = async (payload: any, userId: string, files: any) => {
   const existingUser = await prisma.user.findUnique({
@@ -86,7 +87,6 @@ const createService = async (payload: any, userId: string, files: any) => {
   return result;
 };
 
-
 const getMyServices = async (
   userId: string,
   options: IPaginationOptions & { search?: string }
@@ -94,7 +94,6 @@ const getMyServices = async (
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { search } = options;
   const searchFilters = search ? searchFilter3(search) : {};
-
 
   const services = await prisma.service.findMany({
     where: {
@@ -109,7 +108,6 @@ const getMyServices = async (
     },
   });
 
-
   const servicesWithRatings = await Promise.all(
     services.map(async (service) => {
       const ratingStats = await prisma.review.aggregate({
@@ -121,7 +119,7 @@ const getMyServices = async (
       return {
         ...service,
         reviewStats: {
-          averageRating: ratingStats._avg.rating || 0, 
+          averageRating: ratingStats._avg.rating || 0,
           totalReviews: ratingStats._count.rating || 0,
         },
       };
@@ -131,7 +129,7 @@ const getMyServices = async (
   return {
     meta: {
       total: await prisma.service.count({
-        where: { userId: userId, ...searchFilters , isDeleted: false },
+        where: { userId: userId, ...searchFilters, isDeleted: false },
       }),
       page,
       limit,
@@ -140,7 +138,7 @@ const getMyServices = async (
   };
 };
 
-const getAllServices = async (
+const getAllServices1 = async (
   options: IPaginationOptions & { search?: string }
 ) => {
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
@@ -193,6 +191,85 @@ const getAllServices = async (
     data: servicesWithRatings,
   };
 };
+
+const getAllServices = async (
+  options: IPaginationOptions & { search?: string },
+  userId: string
+) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const { search } = options;
+  const searchFilters = search ? searchFilter3(search) : {};
+
+  const todayDate = new Date().toISOString().split("T")[0];
+
+  // Fetch user location
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      locationLat: true,
+      locationLong: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  const services = await prisma.service.findMany({
+    where: {
+      isDeleted: false,
+      ...searchFilters,
+      date: { gte: todayDate },
+    },
+    skip: skip,
+    take: limit,
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Calculate distance and attach it to each service
+  const servicesWithDistance = await Promise.all(
+    services.map(async (service) => {
+      const ratingStats = await prisma.review.aggregate({
+        where: { serviceId: service.id },
+        _avg: { rating: true },
+        _count: { rating: true },
+      });
+
+      const distance =
+        getDistance(
+          {
+            latitude: user?.locationLat ?? 0,
+            longitude: user?.locationLong ?? 0,
+          },
+          {
+            latitude: service.locationLat ?? 0,
+            longitude: service.locationLong ?? 0,
+          }
+        ) / 1000; // Convert meters to km
+
+      return {
+        ...service,
+        distance, // Add distance in km
+        reviewStats: {
+          averageRating: ratingStats._avg.rating || 0,
+          totalReviews: ratingStats._count.rating || 0,
+        },
+      };
+    })
+  );
+
+  return {
+    meta: {
+      total: await prisma.service.count({
+        where: { ...searchFilters, isDeleted: false },
+      }),
+      page,
+      limit,
+    },
+    data: servicesWithDistance,
+  };
+};
+
 
 
 

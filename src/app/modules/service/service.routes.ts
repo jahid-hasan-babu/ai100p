@@ -15,7 +15,7 @@ router.post(
 
 router.get("/", auth(), ServiceControllers.getMyServices);
 
-router.get("/all",  ServiceControllers.getAllServices);
+router.get("/all", auth(), ServiceControllers.getAllServices);
 
 router.put(
   "/:id",

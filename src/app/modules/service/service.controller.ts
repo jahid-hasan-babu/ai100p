@@ -34,7 +34,8 @@ const getMyServices = catchAsync(async (req: Request, res: Response) => {
 
 const getAllServices = catchAsync(async (req: Request, res: Response) => {
   const options = req.query;
-  const result = await serviceServices.getAllServices( options);
+  const userId = req.user.id;
+  const result = await serviceServices.getAllServices(options, userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
