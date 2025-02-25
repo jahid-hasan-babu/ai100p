@@ -49,15 +49,19 @@ model User {
   Share          Share[]
   Report         Report[]
   SavedPost      SavedPost[]
-  messages       Message[]      @relation("UserMessages")
-  conversations  Conversation[] @relation("User1Conversations")
-  conversations2 Conversation[] @relation("User2Conversations")
-  following      Follower[]     @relation("UserFollowers")
-  followers      Follower[]     @relation("FollowerList")
+  messages       Message[]       @relation("UserMessages")
+  conversations  Conversation[]  @relation("User1Conversations")
+  conversations2 Conversation[]  @relation("User2Conversations")
+  following      Follower[]      @relation("UserFollowers")
+  followers      Follower[]      @relation("FollowerList")
   Service        Service[]
-  users          Favorite[]     @relation("UserFavorites")
-  artist         Favorite[]     @relation("ArtistFavorites")
-  user           Review[]       @relation("UserReviews")
+  users          Favorite[]      @relation("UserFavorites")
+  artist         Favorite[]      @relation("ArtistFavorites")
+  user           Review[]        @relation("UserReviews")
+  booking        Booking[]       @relation("UserBookings")
+  notifications  Notifications[] @relation("Notifications")
+  payment        Payment[]       @relation("Payment")
+
 
   @@map("users")
 }
@@ -73,7 +77,6 @@ model Otp {
 
   @@map("otps")
 }
-
 
 model Post {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -211,6 +214,21 @@ model generateFile {
   @@map("generateFiles")
 }
 
+model Notifications {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  bookingId  String?  @db.ObjectId
+  title      String
+  body       String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [receiverId], references: [id], name: "Notifications")
+
+  @@map("notifications")
+}
+
 model Follower {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   followerId  String   @db.ObjectId
@@ -243,8 +261,9 @@ model Service {
   report       Report[]
 
   // relation
-  user    User     @relation(fields: [userId], references: [id])
-  review  Review[] @relation("ServiceReviews")
+  user    User      @relation(fields: [userId], references: [id])
+  review  Review[]  @relation("ServiceReviews")
+  booking Booking[] @relation("ServiceBookings")
 
   @@map("services")
 }
@@ -280,7 +299,45 @@ model Review {
   @@map("reviews")
 }
 
+model Booking {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String        @db.ObjectId
+  serviceId       String        @db.ObjectId
+  name            String
+  age             String
+  date            String
+  time            String
+  price           Float
+  paymentIntentId String?
+  bookingStatus   BookingType   @default(PENDING)
+  status          BookingStatus @default(ACTIVE)
+  isPaid          Boolean       @default(false)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  user    User    @relation("UserBookings", fields: [userId], references: [id])
+  service Service @relation("ServiceBookings", fields: [serviceId], references: [id])
+
+  @@map("bookings")
+}
+
+model Payment {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  paymentIntentId String?
+  userId          String?  @db.ObjectId
+  amount          Float?
+  customerId      String?
+  bookingId       String?  @db.ObjectId
+  paymentMethodId String?
+  paymentDate     DateTime
+  user            User?    @relation(fields: [userId], references: [id], name: "Payment")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("payments")
+}
 
 enum UserRoleEnum {
   USER
@@ -310,4 +367,15 @@ enum Gender {
 enum NotificationType {
   ON
   OFF
+}
+
+enum BookingStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingType {
+  PENDING
+  CONFIRMED
 }
