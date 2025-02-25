@@ -291,13 +291,50 @@ const getAllServices = async (
   };
 };
 
+const getPopularArtist = async (
+  options: IPaginationOptions & { search?: string }
+) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const services = await prisma.user.findMany({
+    where: {
+      role: "SELLER",
+      status: "ACTIVATE",
+      profileStatus: "POPULAR",
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: limit,
+    skip,
+    select: {
+      id: true,
+      name: true,
+      userName: true,
+      profileImage: true,
+    },
+  });
+  return {
+    meta: {
+      total: await prisma.user.count({
+        where: {
+          role: "SELLER",
+          status: "ACTIVATE",
+          profileStatus: "POPULAR",
+        },
+      }),
+      page,
+      limit,
+    },
+    data: services,
+  };
+};
+
 const updateService = async (
   serviceId: string,
   payload: any,
   userId: string,
   files: any
 ) => {
-  
   const existingService = await prisma.service.findUnique({
     where: { id: serviceId, userId: userId },
     select: { serviceImage: true },
@@ -307,15 +344,12 @@ const updateService = async (
     throw new Error("Service not found or unauthorized access");
   }
 
-  let serviceImage = existingService.serviceImage; 
-
+  let serviceImage = existingService.serviceImage;
 
   if (files && files.length > 0) {
-  
     for (const imageUrl of existingService.serviceImage) {
       try {
         await deleteFromS3ByUrl(imageUrl as string);
-       
       } catch (error) {
         console.error("Failed to delete old image:", error);
         throw new ApiError(
@@ -325,22 +359,20 @@ const updateService = async (
       }
     }
 
-
     const uploadResults = await Promise.all(
       files.map(async (file: any) => {
         const uploadResult = await fileUploader.uploadToDigitalOcean(file);
         return uploadResult.Location;
       })
     );
-    serviceImage = uploadResults.slice(0, 5); 
+    serviceImage = uploadResults.slice(0, 5);
   }
 
- 
   const updatedService = await prisma.service.update({
     where: { id: serviceId, userId: userId },
     data: {
       ...payload,
-      serviceImage: serviceImage, 
+      serviceImage: serviceImage,
       updatedAt: new Date(),
     },
   });
@@ -357,24 +389,20 @@ const deleteService = async (serviceId: string, userId: string) => {
     throw new Error("Service not found or unauthorized access");
   }
 
-
   const result = await prisma.service.update({
     where: { id: serviceId, userId: userId },
     data: {
       isDeleted: true,
     },
   });
-  return
-}
-
-
-
-
+  return;
+};
 
 export const serviceServices = {
   createService,
   getMyServices,
   getAllServices,
+  getPopularArtist,
   updateService,
   deleteService,
 };

@@ -17,6 +17,8 @@ router.get("/", auth(), ServiceControllers.getMyServices);
 
 router.get("/all", auth(), ServiceControllers.getAllServices);
 
+router.get("/popular", ServiceControllers.getPopularArtist);
+
 router.put(
   "/:id",
   auth(),
