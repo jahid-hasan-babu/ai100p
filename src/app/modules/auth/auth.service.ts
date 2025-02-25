@@ -2,12 +2,102 @@ import * as bcrypt from "bcrypt";
 import httpStatus from "http-status";
 import { Secret } from "jsonwebtoken";
 import config from "../../../config";
-import AppError from "../../errors/ApiError";
-import { generateToken } from "../../utils/generateToken";
+import { generateToken, otpToken } from "../../utils/generateToken";
 import prisma from "../../utils/prisma";
 import ApiError from "../../errors/ApiError";
-import sentEmailUtility from "../../utils/sentEmailUtility";
+import Twilio from "twilio";
+import jwt from "jsonwebtoken";
 
+const sendOtpMessage = async (payload: any) => {
+  const client = Twilio(config.twilio.accountSid, config.twilio.authToken);
+  const OTP_EXPIRY_TIME = 2 * 60 * 1000; 
+
+  const { phone } = payload;
+
+  if (!phone || !phone.startsWith("+")) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Phone number must be in E.164 format with country code."
+    );
+  }
+
+  // Generate 6-digit OTP
+  const otp = Math.floor(1000 + Math.random() * 900000).toString();
+  const expiry = new Date(Date.now() + OTP_EXPIRY_TIME);
+
+  try {
+    // Store OTP in database using Prisma
+    await prisma.otp.upsert({
+      where: { phone },
+      update: { otp, expiry },
+      create: { phone, otp, expiry },
+    });
+
+    // Send OTP via Twilio SMS
+    const result = await client.messages.create({
+      body: `Your OTP code is ${otp}. It will expire in 2 minutes.`,
+      from: config.twilio.twilioPhoneNumber,
+      to: phone,
+    });
+
+    // Return formatted response
+    return {
+      body: `Your OTP code is send. It will expire in 2 minutes.`,
+      from: result.from,
+      to: result.to,
+      status: result.status,
+      dateCreated: result.dateCreated,
+    };
+  } catch (error: any) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || "Failed to send OTP."
+    );
+  }
+};
+
+const verifyOtpMessage = async (payload: any) => {
+  const { phone, otp } = payload;
+
+  if (!phone || !otp) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "Phone number and OTP are required"
+    );
+  }
+
+  const storedOtp = await prisma.otp.findUnique({
+    where: { phone },
+  });
+
+  if (!storedOtp) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "OTP not found. Please request a new one.' "
+    );
+  }
+
+  if (new Date() > (storedOtp?.expiry! ?? null)) {
+    throw new ApiError(
+      httpStatus.EXPECTATION_FAILED,
+      "OTP has expired. Please request a new one."
+    );
+  }
+
+  if (storedOtp.otp !== otp) {
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "Invalid OTP. Please check the code and try again."
+    );
+  }
+
+  if (storedOtp.otp === otp && storedOtp.phone === phone) {
+    await prisma.otp.delete({
+      where: { phone },
+    });
+  }
+  return { phone };
+};
 
 const loginUserFromDB = async (payload: {
   email: string;
@@ -26,7 +116,7 @@ const loginUserFromDB = async (payload: {
   );
 
   if (!isCorrectPassword) {
-    throw new AppError(httpStatus.BAD_REQUEST, "Password incorrect");
+    throw new ApiError(httpStatus.BAD_REQUEST, "Password incorrect");
   }
 
   if (payload?.fcmToken) {
@@ -55,7 +145,7 @@ const loginUserFromDB = async (payload: {
     name: userData.name,
     userName: userData.userName,
     profileImage: userData.profileImage,
-    ProfileStatus: userData.profileStatus,
+    profileStatus: userData.profileStatus,
     email: userData.email,
     locationLat: userData.locationLat,
     locationLong: userData.locationLong,
@@ -64,146 +154,137 @@ const loginUserFromDB = async (payload: {
   };
 };
 
+const forgetPassword = async (payload: any) => {
+  const client = Twilio(config.twilio.accountSid, config.twilio.authToken);
+  const OTP_EXPIRY_TIME = 2 * 60 * 1000;
 
-const forgotPassword = async (payload: { email: string }) => {
-  // Check if the user exists
-  const userData = await prisma.user.findUnique({
-    where: { email: payload.email },
-  });
+  const { phone } = payload;
 
-  if (!userData) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "User not found");
+  if (!phone || !phone.startsWith("+")) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Phone number must be in E.164 format with country code."
+    );
   }
 
-  const OTP_EXPIRY_TIME = 5 * 60 * 1000; // OTP valid for 5 minutes
+  const otp = Math.floor(1000 + Math.random() * 9000).toString();
   const expiry = new Date(Date.now() + OTP_EXPIRY_TIME);
 
-  // Generate OTP
-  const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
-
-  // Email subject and plain text
-  const emailSubject = "OTP Verification";
-  const emailText = `Your OTP is: ${otp}`;
-
-  // HTML email content
-  const emailHTML = `<!DOCTYPE html>
-  <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>OTP Verification</title>
-  </head>
-  <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f9fc; margin: 0; padding: 0; line-height: 1.6;">
-      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-          <div style="background-color: #FF7600; background-image: linear-gradient(135deg, #FF7600, #45a049); padding: 30px 20px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);">OTP Verification</h1>
-          </div>
-          <div style="padding: 20px 12px; text-align: center;">
-              <p style="font-size: 18px; color: #333333; margin-bottom: 10px;">Hello,</p>
-              <p style="font-size: 18px; color: #333333; margin-bottom: 20px;">Your OTP for verifying your account is:</p>
-              <p style="font-size: 36px; font-weight: bold; color: #FF7600; margin: 20px 0; padding: 10px 20px; background-color: #f0f8f0; border-radius: 8px; display: inline-block; letter-spacing: 5px;">${otp}</p>
-              <p style="font-size: 16px; color: #555555; margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">Please enter this OTP to complete the verification process. This OTP is valid for 5 minutes.</p>
-              <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-                  <p style="font-size: 14px; color: #888888; margin-bottom: 4px;">Thank you for choosing our service!</p>
-                  <p style="font-size: 14px; color: #888888; margin-bottom: 0;">If you didn't request this OTP, please ignore this email.</p>
-              </div>
-          </div>
-          <div style="background-color: #f9f9f9; padding: 10px; text-align: center; font-size: 12px; color: #999999;">
-              <p style="margin: 0;">© 2023 Your Company Name. All rights reserved.</p>
-          </div>
-      </div>
-  </body>
-  </html>`;
-
-  // Send email with plain text and HTML
-  await sentEmailUtility(payload.email, emailSubject, emailText, emailHTML);
-
-  // Check if OTP already exists for the user
-  const existingOtp = await prisma.otp.findFirst({
-    where: { email: payload.email },
-  });
-
-  if (existingOtp) {
-    // Update existing OTP
-    await prisma.otp.update({
-      where: {
-        id: existingOtp.id,
-      },
-      data: {
-        otp,
-        expiry,
-      },
+  try {
+    await prisma.otp.upsert({
+      where: { phone },
+      update: { otp, expiry },
+      create: { phone, otp, expiry },
     });
-  } else {
-    // Create a new OTP entry
-    await prisma.otp.create({
-      data: {
-        email: payload.email,
-        otp,
-        expiry,
-      },
+
+    const result = await client.messages.create({
+      body: `Your OTP code is ${otp}. It will expire in 2 minutes.`,
+      from: config.twilio.twilioPhoneNumber,
+      to: phone,
     });
+
+    return {
+      body: `Your OTP code is send. It will expire in 2 minutes.`,
+      from: result.from,
+      to: result.to,
+      status: result.status,
+      dateCreated: result.dateCreated,
+    };
+  } catch (error: any) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || "Failed to send OTP."
+    );
   }
 };
 
-const verifyOtp = async (payload: { email: string; otp: number }) => {
-  // Check if the user exists
-  const userData = await prisma.user.findUniqueOrThrow({
-    where: {
-      email: payload.email,
-    },
-  });
+const verifyOtp = async (payload: any) => {
+  const { phone, otp } = payload;
 
-  if (!userData) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "User not found");
+  if (!phone || !otp) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "Phone number and OTP are required"
+    );
   }
 
-  // Check if the OTP is valid
-  const otpData = await prisma.otp.findFirst({
-    where: {
-      email: payload.email,
-    },
+  const storedOtp = await prisma.otp.findUnique({
+    where: { phone },
   });
 
-  if (otpData?.otp !== payload.otp) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid OTP");
+  if (!storedOtp) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "OTP not found. Please request a new one.' "
+    );
   }
 
-  // Remove the OTP after successful verification
-  await prisma.otp.delete({
-    where: {
-      id: otpData.id,
-    },
-  });
+  if (new Date() > (storedOtp?.expiry! ?? null)) {
+    throw new ApiError(
+      httpStatus.EXPECTATION_FAILED,
+      "OTP has expired. Please request a new one."
+    );
+  }
 
-  return;
+  if (storedOtp.otp !== otp) {
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "Invalid OTP. Please check the code and try again."
+    );
+  }
+
+  const token = otpToken(
+    {
+      phone: payload.phone,
+      otp,
+    },
+    config.jwt.access_secret as Secret,
+    config.jwt.access_expires_in as string
+  );
+
+  if (storedOtp.otp === otp && storedOtp.phone === phone) {
+    await prisma.otp.delete({
+      where: { phone },
+    });
+  }
+  return { phone, token };
 };
 
 const changePassword = async (payload: any) => {
+  const decodedToken: any = jwt.verify(
+    payload.token,
+    config.jwt.access_secret as Secret
+  );
+  const phone = decodedToken.phone;
+  console.log(phone);
+
+  if (!phone) {
+    throw new Error("Invalid token: Phone number is missing.");
+  }
+
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
-      email: payload.email,
+      phone,
       status: "ACTIVATE",
     },
   });
 
-  const hashedPassword: string = await bcrypt.hash(payload.newPassword, 12);
+  const hashedPassword: string = await bcrypt.hash(
+    payload.password,
+    parseInt(config.bcrypt_salt_rounds as any)
+  );
 
   await prisma.user.update({
-    where: {
-      id: userData.id,
-    },
-    data: {
-      password: hashedPassword,
-    },
+    where: { id: userData.id },
+    data: { password: hashedPassword },
   });
-
-  return;
 };
 
 export const AuthServices = {
   loginUserFromDB,
-  forgotPassword,
+  sendOtpMessage,
+  verifyOtpMessage,
+  forgetPassword,
   verifyOtp,
   changePassword,
 };

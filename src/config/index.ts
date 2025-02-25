@@ -14,4 +14,9 @@ export default {
     refresh_secret: process.env.JWT_REFRESH_SECRET,
     refresh_expires_in: process.env.JWT_REFRESH_EXPIRES_IN,
   },
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER,
+  },
 };

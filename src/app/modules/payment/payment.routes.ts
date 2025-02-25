@@ -1,27 +1,79 @@
-import express from "express";
-import auth from "../../middlewares/auth";
-import { PaymentController } from "./payment.controller";
+import express from 'express';
+import auth from '../../middlewares/auth';
+import { UserRoleEnum } from '@prisma/client';
+import { PaymentController } from './payment.controller';
 
 const router = express.Router();
-// Authorize the customer with the amount and send payment request
+
+import {
+  AuthorizedPaymentPayloadSchema,
+  capturedPaymentPayloadSchema,
+  refundPaymentPayloadSchema,
+  saveNewCardWithExistingCustomerPayloadSchema,
+  TStripeSaveWithCustomerInfoPayloadSchema,
+} from './payment.validation';
+import validateRequest from '../../middlewares/validateRequest';
+import { stripe } from "../../utils/stripe";
+
+// create a new customer with card
 router.post(
-  "/make-payment",
-  auth("USER", "ADMIN"),
-  // validateRequest(AuthorizedPaymentPayloadSchema),
-  PaymentController.createPayment
+  "/save-card",
+  auth(),
+  validateRequest(TStripeSaveWithCustomerInfoPayloadSchema),
+  PaymentController.saveCardWithCustomerInfo
 );
 
+// Authorize the customer with the amount and send payment request
+router.post(
+  "/payment",
+  auth(),
+  PaymentController.authorizedPaymentWithSaveCard
+);
+
+// Capture the payment request and deduct the amount
 router.post(
   "/capture-payment",
-  auth("USER", "ADMIN"),
-  PaymentController.capturePayment
+  validateRequest(capturedPaymentPayloadSchema),
+  PaymentController.capturePaymentRequest
+);
+
+// Save new card to existing customer
+router.post(
+  "/save-new-card",
+  auth(),
+  validateRequest(saveNewCardWithExistingCustomerPayloadSchema),
+  PaymentController.saveNewCardWithExistingCustomer
+);
+
+// Delete card from customer
+router.delete(
+  "/delete-card/:paymentMethodId",
+  PaymentController.deleteCardFromCustomer
 );
 
 // Refund payment to customer
 router.post(
-  "/refund-payment/:orderId",
-  auth("USER", "ADMIN"),
+  "/refund-payment",
+  auth(),
   PaymentController.refundPaymentToCustomer
 );
 
-export const PaymentRoutes = router;
+router.post(
+  "/transfer-funds/:bookingId",
+  auth(),
+  PaymentController.transferFundsWithStripe
+);
+
+router.get("/customers/:customerId", PaymentController.getCustomerDetails);
+
+router.get(
+  "/customers",
+  auth("ADMIN", UserRoleEnum.SUPERADMIN),
+  PaymentController.getAllCustomers
+);
+
+router.get("/:customerId", PaymentController.getCustomerSavedCards);
+
+
+
+export const PaymentRouters = router;

@@ -32,6 +32,23 @@ export const searchFilter = (search: string | null) => {
   return filters;
 };
 
+export const searchFilter3 = (search: string | null) => {
+  if (!search) {
+    return undefined;
+  }
+
+  const filters: any = {};
+
+  if (search) {
+    filters.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { about: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  return filters;
+};
+
 export const searchFilter2 = (search: string | null) => {
   if (!search) {
     return undefined;
@@ -45,6 +62,19 @@ export const searchFilter2 = (search: string | null) => {
       { address: { contains: search, mode: "insensitive" } },
     ];
   }
+
+  return filters;
+};
+export const searchFilter4 = (search: string | null) => {
+  if (!search) {
+    return undefined;
+  }
+
+  const filters: any = {
+    OR: [
+      { status: { equals: search } }, // Exact match for status
+    ],
+  };
 
   return filters;
 };
