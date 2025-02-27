@@ -1,7 +1,8 @@
 import admin from "../../../helpers/firebaseAdmin";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 import ApiError from "../../errors/ApiError";
+import { IPaginationOptions } from "../../interface/pagination.type";
 import prisma from "../../utils/prisma";
-
 
 // Send notification to a single user
 const sendSingleNotification = async (req: any) => {
@@ -107,42 +108,173 @@ const sendNotifications = async (senderId: string, req: any) => {
   };
 };
 
-const getNotificationsFromDB = async (req: any) => {
-  const { date } = req.query;
+const getNotificationsFromDB1 = async (
+  req: any,
+  options: IPaginationOptions
+) => {
+  try {
+    const { page, limit, skip } = paginationHelper.calculatePagination(options);
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-  let dateFilter = {};
-  if (date) {
-    const dates = date.split(" to ");
-    if (dates.length === 1) {
-      dateFilter = {
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const todayNotifications = await prisma.notifications.findMany({
+      where: {
+        receiverId: req.user.id,
         createdAt: {
-          gte: new Date(dates[0]),
-          lt: new Date(
-            new Date(dates[0]).setDate(new Date(dates[0]).getDate() + 1)
-          ),
+          gte: todayStart,
+          lte: todayEnd,
         },
-      };
-    } else if (dates.length === 2) {
-      dateFilter = {
+      },
+
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      skip,
+      select: {
+        id: true,
+        title: true,
+        body: true,
+        senderId: true,
+        createdAt: true,
+        sender: {
+          select: {
+            name: true,
+            profileImage: true,
+          },
+        },
+      },
+    });
+
+    // Fetch notifications from the last 7 days (excluding today)
+    const last7DaysStart = new Date();
+    last7DaysStart.setDate(last7DaysStart.getDate() - 7); // 7 days ago
+    last7DaysStart.setHours(0, 0, 0, 0); // Start of the day 7 days ago
+
+    const last7DaysEnd = new Date(todayStart); // End of yesterday (start of today)
+    last7DaysEnd.setMilliseconds(-1); // Adjust to the last millisecond of the previous day
+
+    const last7DaysNotifications = await prisma.notifications.findMany({
+      where: {
+        receiverId: req.user.id,
         createdAt: {
-          gte: new Date(dates[0]),
-          lte: new Date(dates[1]),
+          gte: last7DaysStart,
+          lte: last7DaysEnd, // Exclude today's notifications
         },
-      };
-    }
+      },
+      take: limit,
+      skip,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        body: true,
+        senderId: true,
+        createdAt: true,
+        sender: {
+          select: {
+            name: true,
+            profileImage: true,
+          },
+        },
+      },
+    });
+
+    // Return both today's and last 7 days' notifications
+    return { todayNotifications, last7DaysNotifications };
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    throw new Error("Failed to fetch notifications");
   }
+};
 
-  const notifications = await prisma.notifications.findMany({
+const getNotificationsFromDB = async (
+  req: any,
+  options: IPaginationOptions
+) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  const todayNotifications = await prisma.notifications.findMany({
     where: {
       receiverId: req.user.id,
-      ...dateFilter,
+      createdAt: {
+        gte: todayStart,
+        lte: todayEnd,
+      },
     },
     orderBy: { createdAt: "desc" },
+    take: limit,
+    skip,
+    select: {
+      id: true,
+      title: true,
+      body: true,
+      senderId: true,
+      createdAt: true,
+      sender: {
+        select: {
+          name: true,
+          profileImage: true,
+        },
+      },
+    },
   });
 
+  const last7DaysStart = new Date();
+  last7DaysStart.setDate(last7DaysStart.getDate() - 7);
+  last7DaysStart.setHours(0, 0, 0, 0);
 
-  return notifications;
+  const last7DaysEnd = new Date(todayStart);
+  last7DaysEnd.setMilliseconds(-1);
+
+  const last7DaysNotifications = await prisma.notifications.findMany({
+    where: {
+      receiverId: req.user.id,
+      createdAt: {
+        gte: last7DaysStart,
+        lte: last7DaysEnd,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    skip,
+    select: {
+      id: true,
+      title: true,
+      body: true,
+      senderId: true,
+      createdAt: true,
+      sender: {
+        select: {
+          name: true,
+          profileImage: true,
+        },
+      },
+    },
+  });
+
+  return {
+    meta: {
+      total: await prisma.notifications.count({
+        where: { receiverId: req.user.id },
+      }),
+      page,
+      limit,
+    },
+    todayNotifications,
+    last7DaysNotifications,
+  };
 };
+
+
+
 
 
 const getSingleNotificationFromDB = async (
@@ -159,6 +291,19 @@ const getSingleNotificationFromDB = async (
   const updatedNotification = await prisma.notifications.update({
     where: { id: notificationId },
     data: { read: true },
+    select: {
+      id: true,
+      title: true,
+      body: true,
+      senderId: true,
+      createdAt: true,
+      sender: {
+        select: {
+          name: true,
+          profileImage: true,
+        },
+      },
+    },
   });
 
   return updatedNotification;

@@ -3,8 +3,10 @@ import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { paginationHelper } from "../../../helpers/paginationHelper";
+import { notificationServices } from "../notifications/notification.service";
+import { NotificationType } from "@prisma/client";
 
-const createLike = async (userId: string, postId: string) => {
+const createLike1 = async (userId: string, postId: string) => {
   const existingLike = await prisma.like.findFirst({
     where: {
       userId: userId,
@@ -26,6 +28,64 @@ const createLike = async (userId: string, postId: string) => {
   });
   return like;
 };
+const createLike = async (userId: string, postId: string) => {
+  const existingLike = await prisma.like.findFirst({
+    where: {
+      userId: userId,
+      postId: postId,
+    },
+  });
+
+  if (existingLike) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You have already liked this post"
+    );
+  }
+
+  const like = await prisma.like.create({
+    data: {
+      userId: userId,
+      postId: postId,
+    },
+  });
+
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    select: { userId: true },
+  });
+
+  if (!post) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Post not found");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+
+  const postOwner = await prisma.user.findUnique({
+    where: { id: post.userId },
+    select: { fcmToken: true, isNotification: true },
+  });
+
+  if (postOwner?.fcmToken && postOwner.isNotification === NotificationType.ON) {
+    await notificationServices.sendSingleNotification({
+      params: { userId: post.userId },
+      user: { id: userId },
+      body: {
+        title: "New Like",
+        body: user?.name
+          ? `${user.name} liked your post`
+          : "Someone liked your post",
+      },
+    });
+  }
+
+  return like;
+};
+
+
 
 const getAllLikeWithUser = async (
   postId: string,
