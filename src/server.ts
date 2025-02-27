@@ -6,6 +6,7 @@ import prisma from "./app/utils/prisma";
 
 import seedSuperAdmin from "./app/DB";
 import { chatServices } from "./app/modules/chat/chat.services";
+import { notificationServices } from "./app/modules/notifications/notification.service";
 
 interface ExtendedWebSocket extends WebSocket {
   roomId?: string;
@@ -123,24 +124,24 @@ async function main() {
             if (!isReceiverActive) {
               const senderProfile = await prisma.user.findUnique({
                 where: { id: senderId },
-                select: { email: true },
+                select: { name: true },
               });
 
               const notificationData = {
                 title: "New Message Received!",
                 body: `${
-                  senderProfile?.email || "Someone"
+                  senderProfile?.name || "Someone"
                 } has sent you a new message.`,
               };
 
-              // try {
-              //   await notificationServices.sendSingleNotification({
-              //     params: { userId: receiverId },
-              //     body: notificationData,
-              //   });
-              // } catch (error: any) {
-              //   console.error("Failed to send notification:", error.message);
-              // }
+              try {
+                await notificationServices.sendSingleNotification({
+                  params: { userId: receiverId },
+                  body: notificationData,
+                });
+              } catch (error: any) {
+                console.error("Failed to send notification:", error.message);
+              }
             }
 
             break;

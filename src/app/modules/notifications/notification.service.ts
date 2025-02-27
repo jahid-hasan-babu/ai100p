@@ -138,12 +138,23 @@ const getNotificationsFromDB = async (req: any) => {
       ...dateFilter,
     },
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      title: true,
+      body: true,
+      senderId: true,
+      createdAt: true,
+      sender: {
+        select: {
+          name: true,
+          profileImage: true,
+        },
+      },
+    },
   });
-
 
   return notifications;
 };
-
 
 const getSingleNotificationFromDB = async (
   req: any,
@@ -159,6 +170,19 @@ const getSingleNotificationFromDB = async (
   const updatedNotification = await prisma.notifications.update({
     where: { id: notificationId },
     data: { read: true },
+    select: {
+      id: true,
+      title: true,
+      body: true,
+      senderId: true,
+      createdAt: true,
+      sender: {
+        select: {
+          name: true,
+          profileImage: true,
+        },
+      },
+    },
   });
 
   return updatedNotification;
