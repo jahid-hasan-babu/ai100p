@@ -3,13 +3,11 @@ import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { paginationHelper } from "../../../helpers/paginationHelper";
+import { notificationServices } from "../notifications/notification.service";
 
-
-
-const follow = async (userId: string, followingId: string) => {
-
-  if(userId === followingId){
-    throw new ApiError(httpStatus.BAD_REQUEST, "You cannot follow yourself");  
+const follow1 = async (userId: string, followingId: string) => {
+  if (userId === followingId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "You cannot follow yourself");
   }
 
   const existingFollow = await prisma.follower.findFirst({
@@ -20,7 +18,10 @@ const follow = async (userId: string, followingId: string) => {
   });
 
   if (existingFollow) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "You have already followed this user");
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You have already followed this user"
+    );
   }
   const follow = await prisma.follower.create({
     data: {
@@ -29,7 +30,71 @@ const follow = async (userId: string, followingId: string) => {
     },
   });
   return follow;
-}
+};
+
+const follow = async (userId: string, followingId: string) => {
+  if (userId === followingId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "You cannot follow yourself");
+  }
+
+  // Check if the follow relationship already exists
+  const existingFollow = await prisma.follower.findFirst({
+    where: {
+      followerId: userId,
+      followingId: followingId,
+    },
+  });
+
+  if (existingFollow) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You have already followed this user"
+    );
+  }
+
+  // Create the new follow relationship
+  const follow = await prisma.follower.create({
+    data: {
+      followerId: userId,
+      followingId: followingId,
+    },
+  });
+
+  // Check if the followed user is already following back
+  const isFollowingBack = await prisma.follower.findFirst({
+    where: {
+      followerId: followingId,
+      followingId: userId,
+    },
+  });
+
+  if (!isFollowingBack) {
+    // Fetch the followed user's FCM token
+    const followedUser = await prisma.user.findUnique({
+      where: { id: followingId },
+      select: { fcmToken: true },
+    });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+
+    if (followedUser?.fcmToken) {
+      await notificationServices.sendSingleNotification({
+        params: { userId: followingId },
+        user: { id: userId },
+        body: {
+          title: "New Follower",
+          body: `${user?.name} started followed you`,
+        },
+      });
+    }
+  }
+
+  return follow;
+};
+
 
 const unFollow = async (userId: string, followingId: string) => {
 
