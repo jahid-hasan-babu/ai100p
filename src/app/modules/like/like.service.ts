@@ -4,6 +4,7 @@ import httpStatus from "http-status";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import { notificationServices } from "../notifications/notification.service";
+import { NotificationType } from "@prisma/client";
 
 const createLike1 = async (userId: string, postId: string) => {
   const existingLike = await prisma.like.findFirst({
@@ -49,7 +50,6 @@ const createLike = async (userId: string, postId: string) => {
     },
   });
 
-
   const post = await prisma.post.findUnique({
     where: { id: postId },
     select: { userId: true },
@@ -66,10 +66,10 @@ const createLike = async (userId: string, postId: string) => {
 
   const postOwner = await prisma.user.findUnique({
     where: { id: post.userId },
-    select: { fcmToken: true },
+    select: { fcmToken: true, isNotification: true },
   });
 
-  if (postOwner?.fcmToken) {
+  if (postOwner?.fcmToken && postOwner.isNotification === NotificationType.ON) {
     await notificationServices.sendSingleNotification({
       params: { userId: post.userId },
       user: { id: userId },
