@@ -29,7 +29,11 @@ const sendNotifications = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getNotifications = catchAsync(async (req: Request, res: Response) => {
-  const notifications = await notificationServices.getNotificationsFromDB(req);
+  const options = req.query;
+  const notifications = await notificationServices.getNotificationsFromDB(
+    req,
+    options
+  );
 
   sendResponse(res, {
     statusCode: 200,
