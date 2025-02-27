@@ -49,6 +49,7 @@ const createLike = async (userId: string, postId: string) => {
     },
   });
 
+
   const post = await prisma.post.findUnique({
     where: { id: postId },
     select: { userId: true },
@@ -58,9 +59,14 @@ const createLike = async (userId: string, postId: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Post not found");
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+
   const postOwner = await prisma.user.findUnique({
     where: { id: post.userId },
-    select: { fcmToken: true, name: true },
+    select: { fcmToken: true },
   });
 
   if (postOwner?.fcmToken) {
@@ -69,7 +75,9 @@ const createLike = async (userId: string, postId: string) => {
       user: { id: userId },
       body: {
         title: "New Like",
-        body: `${postOwner.name} liked your post`,
+        body: user?.name
+          ? `${user.name} liked your post`
+          : "Someone liked your post",
       },
     });
   }
