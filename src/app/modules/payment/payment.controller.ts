@@ -228,6 +228,18 @@ const getAllCustomers = catchAsync(async (req: any, res: any) => {
 //   res.status(200).send("Event received");
 // });
 
+const myPayment = catchAsync(async (req: any, res: any) => {
+  const userId = req.user.id;
+  const result = await StripeServices.myPayment(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Retrieve my payment successfully",
+    data: result,
+  });
+});
+
 export const PaymentController = {
   saveCardWithCustomerInfo,
   authorizedPaymentWithSaveCard,
@@ -239,4 +251,5 @@ export const PaymentController = {
   transferFundsWithStripe,
   getCustomerDetails,
   getAllCustomers,
+  myPayment,
 };

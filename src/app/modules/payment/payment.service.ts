@@ -380,6 +380,32 @@ const generateNewAccountLink = async (user: User) => {
   await sendEmail(user?.email || "", "Your Onboarding Url", html);
 };
 
+
+const myPayment = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      customerId: true,
+    },
+  });
+  console.log(user?.customerId);
+
+  const payment = await prisma.payment.findMany({
+    where: {
+      customerId: user?.customerId,
+    },
+    select: {
+      id: true,
+      amount: true,
+      paymentDate: true,
+    },
+  });
+
+  return payment;
+};
+
 export const StripeServices = {
   saveCardWithCustomerInfoIntoStripe,
   authorizedPaymentWithSaveCardFromStripe,
@@ -393,4 +419,5 @@ export const StripeServices = {
   getAllCustomersFromStripe,
   // updateAccount,
   generateNewAccountLink,
+  myPayment,
 };

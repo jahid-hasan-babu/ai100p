@@ -64,6 +64,8 @@ router.post(
   PaymentController.transferFundsWithStripe
 );
 
+router.get("/my-payment", auth(), PaymentController.myPayment);
+
 router.get("/customers/:customerId", PaymentController.getCustomerDetails);
 
 router.get(
@@ -73,6 +75,8 @@ router.get(
 );
 
 router.get("/:customerId", PaymentController.getCustomerSavedCards);
+
+
 
 
 
