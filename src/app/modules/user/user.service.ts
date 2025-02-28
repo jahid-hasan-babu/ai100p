@@ -286,6 +286,7 @@ const getMyProfileFromDB = async (id: string) => {
     select: {
       id: true,
       name: true,
+      userName: true,
       email: true,
       role: true,
       status: true,
@@ -422,6 +423,7 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
     select: {
       id: true,
       name: true,
+      userName: true,
       email: true,
       role: true,
       status: true,
