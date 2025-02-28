@@ -4,7 +4,7 @@ import httpStatus from "http-status";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import { fileUploader } from "../../helpers/fileUploader";
-import {  searchFilter3 } from "../../utils/searchFilter";
+import { searchFilter3, searchFilter5 } from "../../utils/searchFilter";
 import { deleteFromS3ByUrl } from "../../../helpers/fileDeletedFromS3";
 import { StripeServices } from "../payment/payment.service";
 import { stripe } from "../../utils/stripe";
@@ -108,122 +108,6 @@ const getMyServices = async (
     },
   });
 
-   const user = await prisma.user.findUnique({
-     where: { id: userId },
-     select: {
-       locationLat: true,
-       locationLong: true,
-     },
-   });
-
-   const servicesWithDistance = await Promise.all(
-     services.map(async (service) => {
-       const ratingStats = await prisma.review.aggregate({
-         where: { serviceId: service.id },
-         _avg: { rating: true },
-         _count: { rating: true },
-       });
-
-       const distance =
-         getDistance(
-           {
-             latitude: user?.locationLat ?? 0,
-             longitude: user?.locationLong ?? 0,
-           },
-           {
-             latitude: service.locationLat ?? 0,
-             longitude: service.locationLong ?? 0,
-           }
-         ) / 1000; // Convert meters to km
-
-       return {
-         ...service,
-         distance, // Add distance in km
-         reviewStats: {
-           averageRating: ratingStats._avg.rating || 0,
-           totalReviews: ratingStats._count.rating || 0,
-         },
-       };
-     })
-   );
-
-   return {
-     meta: {
-       total: await prisma.service.count({
-         where: { userId: userId, ...searchFilters, isDeleted: false },
-       }),
-       page,
-       limit,
-     },
-     data: servicesWithDistance,
-   };
-};
-
-const getAllServices1 = async (
-  options: IPaginationOptions & { search?: string }
-) => {
-  const { page, limit, skip } = paginationHelper.calculatePagination(options);
-  const { search } = options;
-  const searchFilters = search ? searchFilter3(search) : {};
-
-  const todayDate = new Date().toISOString().split("T")[0];
-
-  const services = await prisma.service.findMany({
-    where: {
-      isDeleted: false,
-      ...searchFilters,
-      date: {
-        gte: todayDate,
-      },
-    },
-    skip: skip,
-    take: limit,
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-
-  const servicesWithRatings = await Promise.all(
-    services.map(async (service) => {
-      const ratingStats = await prisma.review.aggregate({
-        where: { serviceId: service.id },
-        _avg: { rating: true },
-        _count: { rating: true },
-      });
-
-      return {
-        ...service,
-        reviewStats: {
-          averageRating: ratingStats._avg.rating || 0,
-          totalReviews: ratingStats._count.rating || 0,
-        },
-      };
-    })
-  );
-
-  return {
-    meta: {
-      total: await prisma.service.count({
-        where: { ...searchFilters, isDeleted: false },
-      }),
-      page,
-      limit,
-    },
-    data: servicesWithRatings,
-  };
-};
-
-const getAllServices = async (
-  options: IPaginationOptions & { search?: string },
-  userId: string
-) => {
-  const { page, limit, skip } = paginationHelper.calculatePagination(options);
-  const { search } = options;
-  const searchFilters = search ? searchFilter3(search) : {};
-
-  const todayDate = new Date().toISOString().split("T")[0];
-
-  // Fetch user location
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -232,22 +116,6 @@ const getAllServices = async (
     },
   });
 
-  if (!user) {
-    throw new Error("User not found.");
-  }
-
-  const services = await prisma.service.findMany({
-    where: {
-      isDeleted: false,
-      ...searchFilters,
-      date: { gte: todayDate },
-    },
-    skip: skip,
-    take: limit,
-    orderBy: { createdAt: "desc" },
-  });
-
-  // Calculate distance and attach it to each service
   const servicesWithDistance = await Promise.all(
     services.map(async (service) => {
       const ratingStats = await prisma.review.aggregate({
@@ -282,7 +150,7 @@ const getAllServices = async (
   return {
     meta: {
       total: await prisma.service.count({
-        where: { ...searchFilters, isDeleted: false },
+        where: { userId: userId, ...searchFilters, isDeleted: false },
       }),
       page,
       limit,
@@ -290,6 +158,105 @@ const getAllServices = async (
     data: servicesWithDistance,
   };
 };
+
+const getAllServices = async (
+  options: IPaginationOptions & {
+    category?: string;
+    service?: string;
+    distance?: string; // The distance filter (radius in km)
+    price?: string;
+    rating?: string;
+  },
+  userId: string
+) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const { category, service } = options;
+  const priceToNumber = options.price ? parseFloat(options.price) : undefined;
+  const ratingToNumber = options.rating
+    ? parseFloat(options.rating)
+    : undefined;
+  const distanceToNumber = options.distance
+    ? parseFloat(options.distance)
+    : undefined;
+  const searchFilters = searchFilter5(category, priceToNumber);
+
+  const todayDate = new Date().toISOString().split("T")[0];
+
+  // Fetch user location
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { locationLat: true, locationLong: true },
+  });
+
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  // Fetch services
+  const services = await prisma.service.findMany({
+    where: {
+      isDeleted: false,
+      ...searchFilters,
+      date: { gte: todayDate },
+      user: { profileStatus: service ?? undefined },
+    },
+    skip: skip,
+    take: limit,
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Calculate distance and filter by rating & distance (radius)
+  const servicesWithFilters = (
+    await Promise.all(
+      services.map(async (service) => {
+        const ratingStats = await prisma.review.aggregate({
+          where: { serviceId: service.id },
+          _avg: { rating: true },
+          _count: { rating: true },
+        });
+
+        const averageRating = ratingStats._avg.rating || 0;
+        const totalReviews = ratingStats._count.rating || 0;
+
+        // Calculate the distance between the user and the service using geolib or haversine formula
+        const distance =
+          getDistance(
+            {
+              latitude: user?.locationLat ?? 0,
+              longitude: user?.locationLong ?? 0,
+            },
+            {
+              latitude: service.locationLat ?? 0,
+              longitude: service.locationLong ?? 0,
+            }
+          ) / 1000; // Convert meters to kilometers
+
+        return {
+          ...service,
+          distance, // Add calculated distance in km
+          reviewStats: { averageRating, totalReviews },
+        };
+      })
+    )
+  ).filter(
+    (service) =>
+      (ratingToNumber
+        ? service.reviewStats.averageRating >= ratingToNumber
+        : true) &&
+      (distanceToNumber ? service.distance <= distanceToNumber : true) // Only services within the radius
+  );
+
+  return {
+    meta: {
+      total: servicesWithFilters.length,
+      page,
+      limit,
+    },
+    data: servicesWithFilters,
+  };
+};
+
+
 
 const getPopularArtist = async (
   options: IPaginationOptions & { search?: string }

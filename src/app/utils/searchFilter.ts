@@ -78,3 +78,46 @@ export const searchFilter4 = (search: string | null) => {
 
   return filters;
 };
+
+export const searchFilter9 = (category?: string, price?: string) => {
+  if (!category && !price) {
+    return {}; // If both are missing, return an empty object.
+  }
+
+  const filters: any = {};
+
+  if (category && price) {
+    filters.AND = [
+      { title: { contains: category, mode: "insensitive" } },
+      { price: { contains: price, mode: "insensitive" } },
+    ];
+  } else if (category) {
+    filters.title = { contains: category, mode: "insensitive" };
+  } else if (price) {
+    filters.price = { contains: price, mode: "insensitive" };
+  }
+
+  return filters;
+};
+
+export const searchFilter5 = (category?: string, priceToNumber?: number) => {
+  if (!category && priceToNumber === undefined) {
+    return {}; // Return an empty object if no filters are provided
+  }
+
+  const filters: any = {
+    AND: [],
+  };
+
+  if (category) {
+    filters.AND.push({ title: { contains: category, mode: "insensitive" } });
+  }
+
+  if (priceToNumber !== undefined) {
+    filters.AND.push({ price: priceToNumber });
+  }
+
+  return filters;
+};
+
+
