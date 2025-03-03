@@ -107,7 +107,7 @@ const getAllReports = async (options: IPaginationOptions) => {
       service: {
         select: {
           id: true,
-          name: true,
+          title: true,
           user: {
             select: {
               id: true,
@@ -133,7 +133,7 @@ const getMyReportAsOwner = async (userId: string) => {
   const result = await prisma.report.findMany({
     where: {
       OR: [
-        { post: { user: { id: userId } } }, 
+        { post: { user: { id: userId } } },
         { service: { user: { id: userId } } },
       ],
     },
@@ -154,7 +154,7 @@ const getMyReportAsOwner = async (userId: string) => {
       service: {
         select: {
           id: true,
-          name: true,
+          title: true,
         },
       },
     },
