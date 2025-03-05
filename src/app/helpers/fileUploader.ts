@@ -43,7 +43,7 @@ const uploadReviewFile = upload.single("reviewFile");
 
 // Configure DigitalOcean Spaces (S3-compatible)
 export const s3Client = new S3Client({
-  region: "nyc3",
+  region: "stopswap",
   endpoint: process.env.DO_SPACE_ENDPOINT,
   credentials: {
     accessKeyId: process.env.DO_SPACE_ACCESS_KEY || "",
@@ -129,7 +129,7 @@ const uploadToDigitalOcean = async (
     await removeFile(file.path);
 
     return {
-      Location: `https://${Bucket}.nyc3.digitaloceanspaces.com/${Key}`,
+      Location: `https://${Bucket}.sfo3.digitaloceanspaces.com/${Key}`,
       Bucket,
       Key,
     };

@@ -203,6 +203,13 @@ const getAllServices = async (
     skip: skip,
     take: limit,
     orderBy: { createdAt: "desc" },
+    include: {
+      user: {
+        select: {
+          name: true,
+        },
+      },
+    },
   });
 
   // Calculate distance and filter by rating & distance (radius)
