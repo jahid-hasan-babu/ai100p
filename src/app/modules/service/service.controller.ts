@@ -44,6 +44,18 @@ const getAllServices = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getSingleService = catchAsync(async (req: Request, res: Response) => {
+  const serviceId = req.params.serviceId;
+  const userId = req.user.id;
+  const result = await serviceServices.getSingleService(serviceId, userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Services retrieved successfully",
+    data: result,
+  });
+});
+
 const getPopularArtist = catchAsync(async (req: Request, res: Response) => {
   const options = req.query;
   const result = await serviceServices.getPopularArtist(options);
@@ -90,6 +102,7 @@ export const ServiceControllers = {
   createService,
   getMyServices,
   getAllServices,
+  getSingleService,
   getPopularArtist,
   updateService,
   deleteService,
