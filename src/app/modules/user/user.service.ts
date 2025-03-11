@@ -228,6 +228,38 @@ const getAllUsersFromDB = async (
   };
 };
 
+const getAllAdmin = async () => {
+  // Fetch paginated users
+  const result = await prisma.user.findMany({
+    where: {
+      AND: [
+        {
+          role: {
+            in: ["ADMIN"],
+          },
+        },
+      ],
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      name: true,
+      userName: true,
+      email: true,
+      role: true,
+      status: true,
+      profileImage: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return result;
+};
+
+
 const getAllSellerUsersFromDB = async (
   options: IPaginationOptions & { search?: string }
 ) => {
@@ -278,6 +310,57 @@ const getAllSellerUsersFromDB = async (
   };
 };
 
+const getAllCustomerUsersFromDB = async (
+  options: IPaginationOptions & { search?: string }
+) => {
+
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const { search } = options;
+
+  const searchFilters = searchFilter(search as string);
+
+  const result = await prisma.user.findMany({
+    where: {
+      role: "USER",
+      ...searchFilters,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: limit,
+    skip,
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      userName: true,
+      role: true,
+      status: true,
+      profileImage: true,
+      profileStatus: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  const total = await prisma.user.count({
+    where: {
+      ...searchFilters,
+      role: "USER",
+    },
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    },
+    data: result,
+  };
+};
+
 const getMyProfileFromDB = async (id: string) => {
   const Profile = await prisma.user.findUniqueOrThrow({
     where: {
@@ -303,6 +386,7 @@ const getMyProfileFromDB = async (id: string) => {
       instagram: true,
       tikTok: true,
       youtube: true,
+      address: true,
       locationLat: true,
       locationLong: true,
       createdAt: true,
@@ -319,78 +403,6 @@ const getMyProfileFromDB = async (id: string) => {
 
   return Profile;
 };
-
-// const getUserDetailsFromDB1 = async (id: string, currentUserId: string) => {
-//   const existingUser = await prisma.user.findUnique({
-//     where: { id },
-//   });
-
-//   if (!existingUser) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-//   }
-
-//   // Check if the current user follows the target user
-//   const isFollow = await prisma.follower.findFirst({
-//     where: {
-//       followerId: currentUserId,
-//       followingId: id,
-//     },
-//   });
-
-//   const user = await prisma.user.findUniqueOrThrow({
-//     where: { id },
-//     select: {
-//       id: true,
-//       name: true,
-//       email: true,
-//       role: true,
-//       status: true,
-//       profileImage: true,
-//       profileStatus: true,
-//       bio: true,
-//       dateOfBirth: true,
-//       gender: true,
-//       phone: true,
-//       website: true,
-//       facebook: true,
-//       twitter: true,
-//       instagram: true,
-//       tikTok: true,
-//       youtube: true,
-//       locationLat: true,
-//       locationLong: true,
-//       createdAt: true,
-//       updatedAt: true,
-//       Service: {
-//         select: {
-//           id: true,
-//           serviceImage: true,
-//           title: true,
-//           price: true,
-//           review: {
-//             select: {
-//               rating: true,
-//               _count: {
-//                 select: {
-//                   review: true,
-//                 },
-//               },
-//             },
-//           },
-//         },
-//       },
-//       _count: {
-//         select: {
-//           followers: true,
-//           following: true,
-//           Post: true,
-//         },
-//       },
-//     },
-//   });
-
-//   return { ...user, isFollow: !!isFollow };
-// };
 
 const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
   const existingUser = await prisma.user.findUnique({
@@ -419,7 +431,7 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
   });
 
   const user = await prisma.user.findUniqueOrThrow({
-    where: { id },
+    where: { id: currentUserId },
     select: {
       id: true,
       name: true,
@@ -502,6 +514,57 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
   return { ...user, Service: servicesWithRatings, isFollow: !!isFollow };
 };
 
+const getSingleSellerFromDB = async (id: string) => {
+  const seller = await prisma.user.findUniqueOrThrow({
+    where: { id: id },
+    select: {
+      id: true,
+      name: true,
+      userName: true,
+      email: true,
+      role: true,
+      status: true,
+      profileImage: true,
+      profileStatus: true,
+      bio: true,
+      dateOfBirth: true,
+      gender: true,
+      phone: true,
+      website: true,
+      facebook: true,
+      twitter: true,
+      instagram: true,
+      tikTok: true,
+      youtube: true,
+      address: true,
+      locationLat: true,
+      locationLong: true,
+      createdAt: true,
+      updatedAt: true,
+      Service: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          serviceImage: true,
+          title: true,
+          price: true,
+          locationLat: true,
+          locationLong: true,
+        },
+      },
+      _count: {
+        select: {
+          followers: true,
+          following: true,
+        },
+      },
+    },
+  });
+
+  return seller;
+};
 
 const updateMyProfileIntoDB = async (id: string, payload: any, files: any) => {
   const existingUser = await prisma.user.findUnique({
@@ -542,6 +605,9 @@ const updateMyProfileIntoDB = async (id: string, payload: any, files: any) => {
       dateOfBirth: true,
       gender: true,
       phone: true,
+      address: true,
+      locationLat: true,
+      locationLong: true,
       website: true,
       facebook: true,
       twitter: true,
@@ -762,9 +828,12 @@ const socialLogin = async (payload: any) => {
 export const UserServices = {
   registerUserIntoDB,
   getAllUsersFromDB,
+  getAllAdmin,
   getAllSellerUsersFromDB,
+  getAllCustomerUsersFromDB,
   getMyProfileFromDB,
   getUserDetailsFromDB,
+  getSingleSellerFromDB,
   updateUserStatus,
   updateMyProfileIntoDB,
   deleteUser,
