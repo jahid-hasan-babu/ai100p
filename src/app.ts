@@ -8,7 +8,7 @@ import path from "path";
 const app: Application = express();
 app.use(
   cors({
-    origin: ["*"],
+    origin: ["http://localhost:3000", "http://localhost:3001"],
   })
 );
 

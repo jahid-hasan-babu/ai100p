@@ -16,6 +16,8 @@ router.get("/", UserControllers.getAllUsers);
 
 router.get("/seller", UserControllers.getAllSellerUsers);
 
+router.get("/user", UserControllers.getAllCustomerUsers);
+
 router.get("/me", auth(), UserControllers.getMyProfile);
 
 router.get("/:id", auth(), UserControllers.getUserDetails);

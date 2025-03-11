@@ -278,6 +278,56 @@ const getAllSellerUsersFromDB = async (
   };
 };
 
+const getAllCustomerUsersFromDB = async (
+  options: IPaginationOptions & { search?: string }
+) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const { search } = options;
+
+  const searchFilters = searchFilter(search as string);
+
+  const result = await prisma.user.findMany({
+    where: {
+      role: "USER",
+      ...searchFilters,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: limit,
+    skip,
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      userName: true,
+      role: true,
+      status: true,
+      profileImage: true,
+      profileStatus: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  const total = await prisma.user.count({
+    where: {
+      ...searchFilters,
+      role: "USER",
+    },
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+    },
+    data: result,
+  };
+};
+
 const getMyProfileFromDB = async (id: string) => {
   const Profile = await prisma.user.findUniqueOrThrow({
     where: {
@@ -694,6 +744,7 @@ export const UserServices = {
   registerUserIntoDB,
   getAllUsersFromDB,
   getAllSellerUsersFromDB,
+  getAllCustomerUsersFromDB,
   getMyProfileFromDB,
   getUserDetailsFromDB,
   updateUserStatus,

@@ -50,6 +50,22 @@ const getAllSellerUsers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllCustomerUsers = catchAsync(async (req: Request, res: Response) => {
+  const options = pickValidFields(req.query, [
+    "limit",
+    "page",
+    "user",
+    "search",
+  ]);
+  const result = await UserServices.getAllSellerUsersFromDB(options);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Users Retrieve successfully",
+    data: result,
+  });
+});
+
 const getMyProfile = catchAsync(async (req: Request, res: Response) => {
   const id = req.user.id;
   const result = await UserServices.getMyProfileFromDB(id);
@@ -146,6 +162,7 @@ export const UserControllers = {
   registerUser,
   getAllUsers,
   getAllSellerUsers,
+  getAllCustomerUsers,
   getMyProfile,
   getUserDetails,
   updateUserStatus,
