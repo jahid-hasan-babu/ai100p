@@ -228,6 +228,38 @@ const getAllUsersFromDB = async (
   };
 };
 
+const getAllAdmin = async () => {
+  // Fetch paginated users
+  const result = await prisma.user.findMany({
+    where: {
+      AND: [
+        {
+          role: {
+            in: ["ADMIN"],
+          },
+        },
+      ],
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      name: true,
+      userName: true,
+      email: true,
+      role: true,
+      status: true,
+      profileImage: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return result;
+};
+
+
 const getAllSellerUsersFromDB = async (
   options: IPaginationOptions & { search?: string }
 ) => {
@@ -796,6 +828,7 @@ const socialLogin = async (payload: any) => {
 export const UserServices = {
   registerUserIntoDB,
   getAllUsersFromDB,
+  getAllAdmin,
   getAllSellerUsersFromDB,
   getAllCustomerUsersFromDB,
   getMyProfileFromDB,

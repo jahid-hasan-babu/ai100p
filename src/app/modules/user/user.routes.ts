@@ -14,6 +14,8 @@ router.post(
 
 router.get("/", UserControllers.getAllUsers);
 
+router.get("/admin", UserControllers.getAllAdmin);
+
 router.get("/seller", UserControllers.getAllSellerUsers);
 
 router.get("/user", UserControllers.getAllCustomerUsers);

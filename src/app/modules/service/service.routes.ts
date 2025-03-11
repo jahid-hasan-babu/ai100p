@@ -17,7 +17,7 @@ router.get("/", auth(), ServiceControllers.getMyServices);
 
 router.get("/all", auth(), ServiceControllers.getAllServices);
 
-router.get("/popular", ServiceControllers.getPopularArtist);
+router.get("/popular-artist", ServiceControllers.getPopularArtist);
 
 router.get("/:serviceId", auth(), ServiceControllers.getSingleService);
 

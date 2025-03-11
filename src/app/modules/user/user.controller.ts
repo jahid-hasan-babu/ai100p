@@ -34,6 +34,15 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllAdmin = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.getAllAdmin();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Users Retrieve successfully",
+    data: result,
+  });
+});
+
 const getAllSellerUsers = catchAsync(async (req: Request, res: Response) => {
   const options = pickValidFields(req.query, [
     "limit",
@@ -88,7 +97,6 @@ const getUserDetails = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-
 
 const getSingleSellerFromDB = catchAsync(
   async (req: Request, res: Response) => {
@@ -174,6 +182,7 @@ const socialLogin = catchAsync(async (req: Request, res: Response) => {
 export const UserControllers = {
   registerUser,
   getAllUsers,
+  getAllAdmin,
   getAllSellerUsers,
   getAllCustomerUsers,
   getMyProfile,
