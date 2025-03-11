@@ -20,6 +20,12 @@ router.get("/user", UserControllers.getAllCustomerUsers);
 
 router.get("/me", auth(), UserControllers.getMyProfile);
 
+router.get(
+  "/single-seller/:id",
+  auth("ADMIN", "SUPERADMIN"),
+  UserControllers.getSingleSellerFromDB
+);
+
 router.get("/:id", auth(), UserControllers.getUserDetails);
 router.put(
   "/update-profile",

@@ -89,6 +89,19 @@ const getUserDetails = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const getSingleSellerFromDB = catchAsync(
+  async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const result = await UserServices.getSingleSellerFromDB(id);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      message: "User details retrieved successfully",
+      data: result,
+    });
+  }
+);
+
 const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
   const id = req.user.id;
   const payload = req.body.bodyData;
@@ -164,6 +177,7 @@ export const UserControllers = {
   getAllSellerUsers,
   getAllCustomerUsers,
   getMyProfile,
+  getSingleSellerFromDB,
   getUserDetails,
   updateUserStatus,
   updateMyProfile,

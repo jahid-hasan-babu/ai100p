@@ -482,6 +482,58 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
   return { ...user, Service: servicesWithRatings, isFollow: !!isFollow };
 };
 
+const getSingleSellerFromDB = async (id: string) => {
+  const seller = await prisma.user.findUniqueOrThrow({
+    where: { id: id },
+    select: {
+      id: true,
+      name: true,
+      userName: true,
+      email: true,
+      role: true,
+      status: true,
+      profileImage: true,
+      profileStatus: true,
+      bio: true,
+      dateOfBirth: true,
+      gender: true,
+      phone: true,
+      website: true,
+      facebook: true,
+      twitter: true,
+      instagram: true,
+      tikTok: true,
+      youtube: true,
+      address: true,
+      locationLat: true,
+      locationLong: true,
+      createdAt: true,
+      updatedAt: true,
+      Service: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          serviceImage: true,
+          title: true,
+          price: true,
+          locationLat: true,
+          locationLong: true,
+        },
+      },
+      _count: {
+        select: {
+          followers: true,
+          following: true,
+        },
+      },
+    },
+  });
+
+  return seller;
+};
+
 const updateMyProfileIntoDB = async (id: string, payload: any, files: any) => {
   const existingUser = await prisma.user.findUnique({
     where: { id },
@@ -748,6 +800,7 @@ export const UserServices = {
   getAllCustomerUsersFromDB,
   getMyProfileFromDB,
   getUserDetailsFromDB,
+  getSingleSellerFromDB,
   updateUserStatus,
   updateMyProfileIntoDB,
   deleteUser,
