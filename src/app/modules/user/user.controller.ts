@@ -57,7 +57,7 @@ const getAllCustomerUsers = catchAsync(async (req: Request, res: Response) => {
     "user",
     "search",
   ]);
-  const result = await UserServices.getAllSellerUsersFromDB(options);
+  const result = await UserServices.getAllCustomerUsersFromDB(options);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

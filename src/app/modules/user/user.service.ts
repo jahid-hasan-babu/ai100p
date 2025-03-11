@@ -281,6 +281,7 @@ const getAllSellerUsersFromDB = async (
 const getAllCustomerUsersFromDB = async (
   options: IPaginationOptions & { search?: string }
 ) => {
+
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { search } = options;
 
