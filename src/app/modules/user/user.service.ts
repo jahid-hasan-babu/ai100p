@@ -348,7 +348,7 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
   });
 
   const user = await prisma.user.findUniqueOrThrow({
-    where: { id },
+    where: { id: currentUserId },
     select: {
       id: true,
       name: true,
