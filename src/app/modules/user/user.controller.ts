@@ -49,6 +49,7 @@ const getAllSellerUsers = catchAsync(async (req: Request, res: Response) => {
     "page",
     "user",
     "search",
+    "email",
   ]);
   const result = await UserServices.getAllSellerUsersFromDB(options);
 

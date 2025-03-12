@@ -32,6 +32,32 @@ export const searchFilter = (search: string | null) => {
   return filters;
 };
 
+export const sellerSearchFilter = (
+  search: string | null,
+  email: string | null
+) => {
+  if (!search && !email) {
+    return undefined; // Return undefined when no filter criteria are provided
+  }
+
+  const filters: any = { OR: [] };
+
+  if (search) {
+    filters.OR.push(
+      { name: { contains: search, mode: "insensitive" } },
+      { userName: { contains: search, mode: "insensitive" } }
+    );
+  }
+
+  if (email) {
+    filters.OR.push({ email: { contains: email, mode: "insensitive" } });
+  }
+
+  // If no valid filter conditions exist, return undefined
+  return filters.OR.length > 0 ? filters : undefined;
+};
+
+
 export const searchFilter3 = (search: string | null) => {
   if (!search) {
     return undefined;

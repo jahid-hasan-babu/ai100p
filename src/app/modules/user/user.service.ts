@@ -10,7 +10,7 @@ import config from "../../../config";
 import { fileUploader } from "../../helpers/fileUploader";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import { IPaginationOptions } from "../../interface/pagination.type";
-import { searchFilter } from "../../utils/searchFilter";
+import { searchFilter, sellerSearchFilter } from "../../utils/searchFilter";
 import { getDistance } from "geolib";
 import cron from "node-cron";
 
@@ -44,9 +44,6 @@ cron.schedule("0 12 * * *", async () => {
     });
   }
 });
-
-
-
 
 const registerUserIntoDB = async (payload: any, files: any) => {
   const hashedPassword: string = await bcrypt.hash(
@@ -259,14 +256,13 @@ const getAllAdmin = async () => {
   return result;
 };
 
-
 const getAllSellerUsersFromDB = async (
-  options: IPaginationOptions & { search?: string }
+  options: IPaginationOptions & { search?: string; email?: string }
 ) => {
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
-  const { search } = options;
+  const { search, email } = options;
 
-  const searchFilters = searchFilter(search as string);
+  const searchFilters = sellerSearchFilter(search as string, email as string);
 
   const result = await prisma.user.findMany({
     where: {
