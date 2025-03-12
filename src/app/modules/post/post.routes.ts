@@ -25,6 +25,6 @@ router.put(
   PostControllers.updatePost
 );
 
-router.post("/delete/:id", auth("USER", "SELLER"), PostControllers.deletePost);
+router.post("/delete/:id", auth(), PostControllers.deletePost);
 
 export const PostRouters = router;

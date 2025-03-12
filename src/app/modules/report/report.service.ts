@@ -99,6 +99,7 @@ const getAllReports = async (options: IPaginationOptions) => {
             select: {
               id: true,
               name: true,
+              email: true,
               profileImage: true,
             },
           },
