@@ -145,6 +145,16 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteAdmin = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const result = await UserServices.deleteAdmin(id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Admin deleted successfully",
+    data: result,
+  });
+});
+
 const notificationPermission = catchAsync(
   async (req: Request, res: Response) => {
     const id = req.user.id;
@@ -191,6 +201,7 @@ export const UserControllers = {
   updateUserStatus,
   updateMyProfile,
   deleteUser,
+  deleteAdmin,
   notificationPermission,
   changePassword,
   socialLogin,

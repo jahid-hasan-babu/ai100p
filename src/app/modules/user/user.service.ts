@@ -666,6 +666,27 @@ const deleteUser = async (id: string) => {
   return;
 };
 
+const deleteAdmin = async (id: string) => {
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      id: id,
+      role: "ADMIN",
+    },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const result = await prisma.user.delete({
+    where: {
+      id: id,
+      role: "ADMIN",
+    },
+  });
+  return;
+};
+
 const changePassword = async (
   id: string,
   payload: { currentPass: string; newPass: string }
@@ -837,6 +858,7 @@ export const UserServices = {
   updateUserStatus,
   updateMyProfileIntoDB,
   deleteUser,
+  deleteAdmin,
   notificationPermission,
   changePassword,
   socialLogin,
