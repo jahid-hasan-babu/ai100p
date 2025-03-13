@@ -74,8 +74,6 @@ router.get(
   PaymentController.getAllCustomers
 );
 
-
-
 router.get("/:customerId", PaymentController.getCustomerSavedCards);
 
 

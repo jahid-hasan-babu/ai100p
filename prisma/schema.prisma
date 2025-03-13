@@ -333,6 +333,7 @@ model Payment {
   bookingId       String?  @db.ObjectId
   paymentMethodId String?
   paymentDate     DateTime
+  isTransfer      Boolean  @default(false)
   invoiceUrl      String?
   user            User?    @relation(fields: [userId], references: [id], name: "Payment")
   createdAt       DateTime @default(now())

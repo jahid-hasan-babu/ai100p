@@ -75,8 +75,6 @@ const authorizedPaymentWithSaveCardFromStripe = async (payload: {
       confirm: true,
     });
 
-    console.log(paymentIntent);
-
     if (paymentIntent.status === "succeeded") {
       // Step 2: Save payment and update booking in the database
 
@@ -86,6 +84,7 @@ const authorizedPaymentWithSaveCardFromStripe = async (payload: {
           customerId,
           paymentMethodId,
           amount,
+          bookingId,
           paymentDate: new Date(),
         },
         select: { id: true },
@@ -158,12 +157,46 @@ const transferFundsWithStripe = async (userId: string, bookingId: string) => {
     },
   });
 
+  //  const payment = await prisma.payment.create({
+  //    data: {
+  //      paymentIntentId: paymentIntent.id,
+  //      customerId,
+  //      paymentMethodId,
+  //      amount,
+  //      bookingId,
+  //      paymentDate: new Date(),
+  //    },
+  //    select: { id: true },
+  //  });
+
   await prisma.booking.update({
     where: {
       id: bookingId,
     },
     data: {
       status: "COMPLETED",
+    },
+  });
+
+  const paymentId = await prisma.payment.findFirst({
+    where: {
+      bookingId: bookingId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!paymentId) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Payment not found");
+  }
+
+  await prisma.payment.update({
+    where: {
+      id: paymentId.id,
+    },
+    data: {
+      isTransfer: true,
     },
   });
 
