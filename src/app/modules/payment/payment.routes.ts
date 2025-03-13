@@ -74,6 +74,12 @@ router.get(
   PaymentController.getAllCustomers
 );
 
+router.get(
+  "/transactions",
+  auth("ADMIN", "SUPERADMIN"),
+  PaymentController.transactions
+);
+
 router.get("/:customerId", PaymentController.getCustomerSavedCards);
 
 
