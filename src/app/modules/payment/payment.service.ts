@@ -315,6 +315,66 @@ const getAllCustomersFromStripe = async () => {
     throw new ApiError(httpStatus.CONFLICT, error.message);
   }
 };
+
+// const transactions1 = async () => {
+//   const transactions = await stripe.transfers.list();
+//   return transactions;
+// };
+
+// const transactions = async () => {
+//   const transactions = await stripe.payments.list();
+//   return transactions;
+// };
+
+
+// const transactions1 = async () => {
+//   try {
+//     const [payments, transfers] = await Promise.all([
+//       stripe.paymentIntents.list({ limit: 10 }), // Fetch payments
+//       stripe.transfers.list({ limit: 10 }), // Fetch transfers
+//     ]);
+
+//     return { payments, transfers };
+//   } catch (error) {
+//     console.error("Error fetching transactions:", error);
+//     throw error;
+//   }
+// };
+
+// const transactions = async () => {
+//   try {
+//     // Fetch the latest payments and transfers
+//     const [payments, transfers] = await Promise.all([
+//       stripe.paymentIntents.list(), // Fetch payments
+//       stripe.transfers.list(), // Fetch transfers
+//     ]);
+
+//     // Match payments to their corresponding transfers
+//     const matchedTransactions = payments.data.map((payment) => {
+//       const relatedTransfer = transfers.data.find(
+//         (transfer) => transfer.source_transaction === payment.id
+//       );
+
+//       return {
+//         payment_id: payment.id,
+//         payment_amount: `$${(payment.amount / 100).toFixed(2)}`,
+//         transfer: relatedTransfer
+//           ? {
+//               transfer_id: relatedTransfer.id,
+//               transfer_amount: `$${(relatedTransfer.amount / 100).toFixed(2)}`,
+//               destination: relatedTransfer.destination, // Account where money was transferred
+//             }
+//           : "No transfer found",
+//       };
+//     });
+
+//     return matchedTransactions;
+//   } catch (error) {
+//     console.error("Error fetching transactions:", error);
+//     throw error;
+//   }
+// };
+
 // const updateAccount = async (payload: any) => {
 //   const user = await prisma.user.findFirst({
 //     where: {
@@ -380,7 +440,6 @@ const generateNewAccountLink = async (user: User) => {
   await sendEmail(user?.email || "", "Your Onboarding Url", html);
 };
 
-
 const myPayment = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -390,7 +449,6 @@ const myPayment = async (userId: string) => {
       customerId: true,
     },
   });
-  console.log(user?.customerId);
 
   const payment = await prisma.payment.findMany({
     where: {

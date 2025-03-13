@@ -147,6 +147,8 @@ const getAllCustomers = catchAsync(async (req: any, res: any) => {
     data: result,
   });
 });
+
+
 // const handleWebHook = catchAsync(async (req: any, res: any) => {
 //   const sig = req.headers["stripe-signature"] as string;
 //   // console.log(sig);
