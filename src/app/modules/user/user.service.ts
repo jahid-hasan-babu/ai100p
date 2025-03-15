@@ -372,6 +372,7 @@ const getMyProfileFromDB = async (id: string) => {
       role: true,
       status: true,
       profileImage: true,
+      customerId: true,
       profileStatus: true,
       bio: true,
       dateOfBirth: true,

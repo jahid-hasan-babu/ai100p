@@ -263,64 +263,6 @@ const getAllServices = async (
   };
 };
 
-const getSingleService1 = async (id: string, userId: string) => {
-  const service = await prisma.service.findUnique({
-    where: { id: id },
-    include: {
-      user: {
-        select: {
-          name: true,
-          profileImage: true,
-        },
-      },
-    },
-  });
-  if (!service) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Service not found");
-  }
-
-  const ratingStats = await prisma.review.aggregate({
-    where: { serviceId: id },
-    _avg: { rating: true },
-    _count: { rating: true },
-  });
-
-  const averageRating = ratingStats._avg.rating || 0;
-  const totalReviews = ratingStats._count.rating || 0;
-
-  // Fetch user location
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      locationLat: true,
-      locationLong: true,
-    },
-  });
-
-  if (!user) {
-    throw new Error("User not found.");
-  }
-
-  // Calculate the distance between the user and the service using geolib or haversine formula
-  const distance =
-    getDistance(
-      {
-        latitude: user?.locationLat ?? 0,
-        longitude: user?.locationLong ?? 0,
-      },
-      {
-        latitude: service.locationLat ?? 0,
-        longitude: service.locationLong ?? 0,
-      }
-    ) / 1000; // Convert meters to kilometers
-
-  return {
-    ...service,
-    reviewStats: { averageRating, totalReviews },
-    distance, // Add calculated distance in km
-  };
-};
-
 const getSingleService = async (id: string, userId: string) => {
   // Fetch the main service
   const service = await prisma.service.findUnique({
@@ -416,9 +358,6 @@ const getSingleService = async (id: string, userId: string) => {
     otherServices: servicesWithRatings, // Add 10 other services with ratings
   };
 };
-
-
-
 const getPopularArtist = async (
   options: IPaginationOptions & { search?: string }
 ) => {
@@ -456,8 +395,6 @@ const getPopularArtist = async (
     data: services,
   };
 };
-
-
 
 const updateService = async (
   serviceId: string,
