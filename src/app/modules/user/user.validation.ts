@@ -1,6 +1,6 @@
 import z from "zod";
 const registerUser = z.object({
-  body: z.object({
+  bodyData: z.object({
     phone: z.string({
       required_error: "Phone is required!",
     }),

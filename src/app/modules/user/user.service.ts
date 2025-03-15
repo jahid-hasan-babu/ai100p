@@ -46,10 +46,12 @@ cron.schedule("0 12 * * *", async () => {
 });
 
 const registerUserIntoDB = async (payload: any, files: any) => {
+
   const hashedPassword: string = await bcrypt.hash(
     payload.password,
-    parseInt(config.bcrypt_salt_rounds as any)
+    Number(config.bcrypt_salt_rounds as any)
   );
+  console.log(53);
 
   const existingUser = await prisma.user.findUnique({
     where: { email: payload.email.trim() },
@@ -74,7 +76,7 @@ const registerUserIntoDB = async (payload: any, files: any) => {
     );
     profileImage = uploadResult.Location;
   }
-
+  console.log(78);
   const result = await prisma.$transaction(async (transactionClient) => {
     let profileStatus = "NEW";
     let certificate = null;
