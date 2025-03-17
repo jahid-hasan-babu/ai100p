@@ -291,6 +291,8 @@ const getCustomerSavedCardsFromStripe = async (customerId: string) => {
     // Extract only the last4 digits from each payment method
     const cards = paymentMethods.data.map((card) => ({
       last4: card.card?.last4,
+      brand: card.card?.brand,
+      paymentMethodsId: card.id,
     }));
 
     return cards;

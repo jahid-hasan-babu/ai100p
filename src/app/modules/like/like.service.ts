@@ -6,28 +6,7 @@ import { paginationHelper } from "../../../helpers/paginationHelper";
 import { notificationServices } from "../notifications/notification.service";
 import { NotificationType } from "@prisma/client";
 
-const createLike1 = async (userId: string, postId: string) => {
-  const existingLike = await prisma.like.findFirst({
-    where: {
-      userId: userId,
-      postId: postId,
-    },
-  });
 
-  if (existingLike) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "You have already liked this post"
-    );
-  }
-  const like = await prisma.like.create({
-    data: {
-      userId: userId,
-      postId: postId,
-    },
-  });
-  return like;
-};
 const createLike = async (userId: string, postId: string) => {
   const existingLike = await prisma.like.findFirst({
     where: {

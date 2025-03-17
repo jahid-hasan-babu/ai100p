@@ -199,6 +199,7 @@ const getAllServices = async (
       ...searchFilters,
       date: { gte: todayDate },
       user: { profileStatus: service ?? undefined },
+      time: { some: { status: "available" } },
     },
     skip: skip,
     take: limit,
