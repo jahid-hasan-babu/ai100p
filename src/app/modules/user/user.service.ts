@@ -14,6 +14,7 @@ import { searchFilter, sellerSearchFilter } from "../../utils/searchFilter";
 import { getDistance } from "geolib";
 import cron from "node-cron";
 
+
 interface UserWithOptionalPassword extends Omit<User, "password"> {
   password?: string;
 }
@@ -101,7 +102,7 @@ const registerUserIntoDB = async (payload: any, files: any) => {
         profileImage,
         profileStatus,
         certificate,
-        stripeCustomerId: stripeCustomer.id,
+        customerId: stripeCustomer.id,
       },
     });
 
@@ -310,7 +311,6 @@ const getAllSellerUsersFromDB = async (
 const getAllCustomerUsersFromDB = async (
   options: IPaginationOptions & { search?: string }
 ) => {
-
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { search } = options;
 
@@ -396,6 +396,8 @@ const getMyProfileFromDB = async (id: string) => {
           Post: true,
         },
       },
+      Service: true,
+      Post: true,
     },
   });
 

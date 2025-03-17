@@ -396,6 +396,60 @@ const getPopularArtist = async (
   };
 };
 
+
+const getPopularServices = async (options: IPaginationOptions) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+
+  // Fetch services
+  const services = await prisma.service.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: limit,
+    skip,
+    select: {
+      id: true,
+      title: true,
+      price: true,
+      serviceImage: true,
+    },
+  });
+
+  // Fetch and attach ratings for each service
+  const enrichedServices = await Promise.all(
+    services.map(async (service) => {
+      const ratingStats = await prisma.review.aggregate({
+        where: { serviceId: service.id },
+        _avg: { rating: true },
+        _count: { rating: true },
+      });
+
+      const averageRating = ratingStats._avg.rating?.toFixed(2) || 0;
+      const totalReviews = ratingStats._count.rating || 0;
+
+      return {
+        ...service,
+        averageRating,
+        totalReviews,
+      };
+    })
+  );
+
+  // Filter services with an average rating > 4.5
+  const popularServices = enrichedServices.filter(
+    (service) => Number(service.averageRating) >= 4.5
+  );
+
+  return {
+    meta: {
+      total: popularServices.length,
+      page,
+      limit,
+    },
+    data: popularServices,
+  };
+};
+
 const updateService = async (
   serviceId: string,
   payload: any,
@@ -471,6 +525,7 @@ export const serviceServices = {
   getAllServices,
   getSingleService,
   getPopularArtist,
+  getPopularServices,
   updateService,
   deleteService,
 };
