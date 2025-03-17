@@ -189,7 +189,7 @@ const getAllServices = async (
   });
 
   if (!user) {
-    throw new Error("User not found.");
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
   // Fetch services
@@ -199,7 +199,6 @@ const getAllServices = async (
       ...searchFilters,
       date: { gte: todayDate },
       user: { profileStatus: service ?? undefined },
-      time: { some: { status: "available" } },
     },
     skip: skip,
     take: limit,
