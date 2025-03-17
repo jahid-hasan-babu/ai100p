@@ -14,8 +14,10 @@ router.post(
 );
 
 router.get("/", auth(), PostControllers.getAllPosts);
-
+router.get("/popular", PostControllers.getPopularPosts);
 router.get("/:id", PostControllers.getSinglePost);
+
+
 
 router.put(
   "/:id",

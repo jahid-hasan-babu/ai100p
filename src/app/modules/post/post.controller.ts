@@ -5,22 +5,6 @@ import catchAsync from "../../utils/catchAsync";
 import { Request, Response } from "express";
 import pickValidFields from "../../utils/pickValidFields";
 
-// const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-//   const options = pickValidFields(req.query, [
-//     "limit",
-//     "page",
-//     "user",
-//     "search",
-//   ]);
-
-//   const result = await UserServices.getAllUsersFromDB(options);
-
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     message: "Users Retrieve successfully",
-//     data: result,
-//   });
-// });
 
 const createPost = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
@@ -64,6 +48,17 @@ const getSinglePost = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getPopularPosts = catchAsync(async (req: Request, res: Response) => {
+  const options = req.query;
+  const result = await PostServices.getPopularPosts(options);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Posts retrieved successfully",
+    data: result,
+  });
+});
+
 const updatePost = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
   const payload = req.body.bodyData;
@@ -91,6 +86,7 @@ export const PostControllers = {
   createPost,
   getAllPosts,
   getSinglePost,
+  getPopularPosts,
   updatePost,
   deletePost,
 };
