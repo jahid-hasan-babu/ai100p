@@ -34,14 +34,40 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllAdmin = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserServices.getAllAdmin();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Users Retrieve successfully",
+    data: result,
+  });
+});
+
 const getAllSellerUsers = catchAsync(async (req: Request, res: Response) => {
   const options = pickValidFields(req.query, [
     "limit",
     "page",
     "user",
     "search",
+    "email",
   ]);
   const result = await UserServices.getAllSellerUsersFromDB(options);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Users Retrieve successfully",
+    data: result,
+  });
+});
+
+const getAllCustomerUsers = catchAsync(async (req: Request, res: Response) => {
+  const options = pickValidFields(req.query, [
+    "limit",
+    "page",
+    "user",
+    "search",
+  ]);
+  const result = await UserServices.getAllCustomerUsersFromDB(options);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -62,8 +88,9 @@ const getMyProfile = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getUserDetails = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const result = await UserServices.getUserDetailsFromDB(id);
+  const id = req.user.id;
+  const currentUserID = req.params.id;
+  const result = await UserServices.getUserDetailsFromDB(id, currentUserID);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -71,6 +98,18 @@ const getUserDetails = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+const getSingleSellerFromDB = catchAsync(
+  async (req: Request, res: Response) => {
+    const id = req.params.id;
+    const result = await UserServices.getSingleSellerFromDB(id);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      message: "User details retrieved successfully",
+      data: result,
+    });
+  }
+);
 
 const updateMyProfile = catchAsync(async (req: Request, res: Response) => {
   const id = req.user.id;
@@ -107,6 +146,16 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteAdmin = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const result = await UserServices.deleteAdmin(id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Admin deleted successfully",
+    data: result,
+  });
+});
+
 const notificationPermission = catchAsync(
   async (req: Request, res: Response) => {
     const id = req.user.id;
@@ -131,15 +180,30 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const socialLogin = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body;
+  const result = await UserServices.socialLogin(payload);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "User logged in successfully",
+    data: result,
+  });
+});
+
 export const UserControllers = {
   registerUser,
   getAllUsers,
+  getAllAdmin,
   getAllSellerUsers,
+  getAllCustomerUsers,
   getMyProfile,
+  getSingleSellerFromDB,
   getUserDetails,
   updateUserStatus,
   updateMyProfile,
   deleteUser,
+  deleteAdmin,
   notificationPermission,
   changePassword,
+  socialLogin,
 };

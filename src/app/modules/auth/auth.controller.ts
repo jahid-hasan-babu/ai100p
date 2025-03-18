@@ -17,24 +17,38 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 ;
 
 
-const forgotPassword = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthServices.forgotPassword(req.body);
-
+const sendOtp = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthServices.sendOtpMessage(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
-    message: "OTP sent successfully",
+    message: "Otp sent successfully",
     data: result,
   });
 });
 
-const verifyOtp = catchAsync(async (req: Request, res: Response) => {
-  const email = req.body.email;
-  const otp = req.body.otp;
-  const result = await AuthServices.verifyOtp({ email, otp });
-
+const verifyOtpMessage = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthServices.verifyOtpMessage(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
-    message: "OTP verified successfully",
+    message: "Otp verified successfully",
+    data: result,
+  });
+});
+
+const forgetPassword = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthServices.forgetPassword(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Otp sent successfully",
+    data: result,
+  });
+});
+
+const verifyOTP = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthServices.verifyOtp(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Otp verified successfully",
     data: result,
   });
 });
@@ -52,7 +66,9 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 
 export const AuthControllers = {
   loginUser,
-  forgotPassword,
-  verifyOtp,
-  changePassword
- };
+  sendOtp,
+  verifyOtpMessage,
+  forgetPassword,
+  verifyOTP,
+  changePassword,
+};

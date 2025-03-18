@@ -1,319 +1,448 @@
-import prisma from "../../utils/prisma";
 import httpStatus from "http-status";
 import Stripe from "stripe";
+import { TStripeSaveWithCustomerInfo } from "./payment.interface";
+import prisma from "../../utils/prisma";
 import ApiError from "../../errors/ApiError";
+import { User } from "@prisma/client";
+import sendEmail from "../../utils/sendEmail";
+
+const apiVersion = "2024-12-18.acacia";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion,
 });
 
-const createPaymentWithSavedCard = async (
-  userId: string,
-  payload: {
-    products: { productId: string; quantity: number; size?: string }[];
-    paymentMethodId: string;
-  }
+const saveCardWithCustomerInfoIntoStripe = async (
+  payload: TStripeSaveWithCustomerInfo,
+  userId: string
 ) => {
-  const { products, paymentMethodId } = payload;
-
-  if (!products || !Array.isArray(products) || products.length === 0) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Products are required and must be a non-empty array"
-    );
-  }
-
-  await prisma.addToCart.deleteMany({
-    where: {
-      userId,
-      productId: { in: products.map((p) => p.productId) },
-    },
-  });
-
-  if (!paymentMethodId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Payment method ID is required");
-  }
-
-  // Fetch user details
-  const user: any = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      customerId: true,
-      email: true,
-      name: true,
-    },
-  });
-
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-  }
-
-  // Fetch product details and calculate total amount
-  const productDetails = await Promise.all(
-    products.map(async ({ productId, quantity, size }) => {
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
-        select: {
-          id: true,
-          name: true,
-          price: true,
-          description: true,
-          productImage: true,
-        },
-      });
-
-      if (!product) {
-        throw new ApiError(
-          httpStatus.NOT_FOUND,
-          `Product with ID ${productId} not found`
-        );
-      }
-
-      return {
-        ...product,
-        quantity,
-        size: size || null, // Ensure `size` is optional
-        totalPrice: product.price * quantity,
-      };
-    })
-  );
-
-  // Calculate total amount
-  const totalAmount = productDetails.reduce(
-    (acc, product) => acc + product.totalPrice,
-    0
-  );
-
-  if (totalAmount <= 0) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid total amount");
-  }
-
-  // Attach PaymentMethod to the Customer
-  await stripe.paymentMethods.attach(paymentMethodId, {
-    customer: user.customerId,
-  });
-
-  // Create a PaymentIntent with the total amount
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: totalAmount * 100, // Convert to cents
-    currency: "usd",
-    customer: user.customerId || "",
-    payment_method: paymentMethodId,
-    off_session: true,
-    confirm: true,
-    capture_method: "manual",
-  });
-
-  // Create the order record in the database
-  const order = await prisma.order.create({
-    data: {
-      userId: user.id,
-      totalAmount: totalAmount,
-      paymentIntentId: paymentIntent.id,
-      products: productDetails.map((product) => ({
-        productId: product.id,
-        name: product.name,
-        quantity: product.quantity,
-        productImage: product.productImage,
-        size: product.size,
-        price: product.price,
-        totalPrice: product.totalPrice,
-      })),
-    },
-  });
-
-  // Prepare the response
-  return {
-    paymentIntentId: paymentIntent.id,
-    amount: totalAmount,
-    email: user.email,
-    object: paymentIntent.object,
-    payment_method: paymentIntent.payment_method,
-    orderId: order.id,
-    products: productDetails.map((product) => ({
-      id: product.id,
-      size: product.size,
-      name: product.name,
-      price: product.price,
-      quantity: product.quantity,
-      productImage: product.productImage,
-      totalPrice: product.totalPrice,
-    })),
-  };
-};
-
-const capturePayment = async (
-  userId: string,
-  payload: {
-    address: string;
-    phone: string;
-    paymentIntentId: string;
-  }
-) => {
-  const { address, phone, paymentIntentId } = payload;
-
-  // Fetch the user details
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      customerId: true,
-      email: true,
-      name: true,
-    },
-  });
-
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-  }
-
-  if (!paymentIntentId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Payment Intent ID is required");
-  }
-
-  // Find the existing order using paymentIntentId
-  const existingOrder = await prisma.order.findFirst({
-    where: { paymentIntentId },
-    select: {
-      id: true,
-      products: true, // Assuming `products` is stored as JSON (Array)
-    },
-  });
-
-  if (!existingOrder) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
-  }
-
-  // Capture the payment using Stripe
-  const capturedPayment = await stripe.paymentIntents.capture(paymentIntentId);
-
-  if (capturedPayment.status !== "succeeded") {
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Payment capture failed"
-    );
-  }
-
-  // Update the order with payment details
-  const updatedOrder = await prisma.order.update({
-    where: { id: existingOrder.id },
-    data: {
-      address: address,
-      phone,
-      paymentStatus: "PAID",
-      totalAmount: capturedPayment.amount / 100,
-    },
-  });
-
-  // Create the payment record
-  await prisma.payment.create({
-    data: {
-      userId: user.id,
-      orderId: existingOrder.id,
-      amount: capturedPayment.amount / 100,
-    },
-  });
-
-  // Ensure products exist and are an array before updating stock
-  if (existingOrder.products && Array.isArray(existingOrder.products)) {
-    await Promise.all(
-      existingOrder.products.map(async (product: any) => {
-        if (product.productId && product.quantity) {
-          await prisma.product.update({
-            where: { id: product.productId },
-            data: {
-              inStock: {
-                decrement: product.quantity,
-              },
-            },
-          });
-        }
-      })
-    );
-  }
-
-  return { orderId: updatedOrder.id };
-};
-
-const refundPayment = async (orderId: string) => {
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    select: {
-      id: true,
-      status: true,
-      paymentIntentId: true,
-      paymentStatus: true,
-      totalAmount: true,
-      products: true,
-    },
-  });
-
-  if (!order) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
-  }
-
-  if (order.paymentStatus !== "PAID") {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Only paid orders can be refunded"
-    );
-  }
-
-  const refundAmount = (order.totalAmount ?? 0) * 100;
-
-  const refund = await stripe.refunds.create({
-    payment_intent: order.paymentIntentId ?? "",
-    amount: refundAmount,
-  });
-
-  if (refund.status === "succeeded") {
-    await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        paymentStatus: "REFUNDED",
+  try {
+    const { user, paymentMethodId, address } = payload;
+    const customer = await stripe.customers.create({
+      name: user.name,
+      email: user.email,
+      address: {
+        city: address.city,
+        postal_code: address.postal_code,
+        country: address.country,
+      },
+    });
+    const attach = await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: customer.id,
+    });
+    const updateCustomer = await stripe.customers.update(customer.id, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId,
       },
     });
 
-    let parsedProducts;
-    try {
-      parsedProducts =
-        typeof order.products === "string"
-          ? JSON.parse(order.products)
-          : order.products;
-    } catch (error) {
-      throw new ApiError(
-        httpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to parse products data"
-      );
-    }
-
-    await Promise.all(
-      parsedProducts.map(async (product: { id: string; quantity: number }) => {
-        await prisma.product.update({
-          where: { id: product.id },
-          data: {
-            inStock: {
-              increment: product.quantity,
-            },
-          },
-        });
-      })
-    );
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        customerId: customer.id,
+      },
+    });
 
     return {
-      refundId: refund.id,
-      message: "Refund successfully processed",
+      customerId: customer.id,
+      paymentMethodId: paymentMethodId,
     };
-  } else {
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Refund process failed"
-    );
+  } catch (error: any) {
+    throw Error(error.message);
   }
 };
 
-export const PaymentServices = {
-  createPaymentWithSavedCard,
-  capturePayment,
-  refundPayment,
+const authorizedPaymentWithSaveCardFromStripe = async (payload: {
+  customerId: string;
+  amount: number;
+  paymentMethodId: string;
+  bookingId: string;
+}) => {
+  try {
+    const { customerId, paymentMethodId, amount, bookingId } = payload;
+
+    const attach = await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: customerId,
+    });
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount * 100, // Total amount in cents
+      currency: "usd",
+      customer: customerId,
+      payment_method: paymentMethodId,
+      off_session: true,
+      confirm: true,
+    });
+
+    if (paymentIntent.status === "succeeded") {
+      // Step 2: Save payment and update booking in the database
+
+      const payment = await prisma.payment.create({
+        data: {
+          paymentIntentId: paymentIntent.id,
+          customerId,
+          paymentMethodId,
+          amount,
+          bookingId,
+          paymentDate: new Date(),
+        },
+        select: { id: true },
+      });
+
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+          paymentIntentId: paymentIntent.id,
+          isPaid: true,
+        },
+      });
+
+      return {
+        success: true,
+        message: "Payment processed successfully",
+        data: {
+          paymentId: payment.id,
+          paymentIntentId: paymentIntent.id,
+        },
+      };
+    } else {
+      return {
+        success: false,
+        message: "PaymentIntent not succeeded",
+        status: paymentIntent.status,
+      };
+    }
+  } catch (error: any) {
+    // Log the error for debugging
+    console.error("Stripe Payment Error:", error.message, error.stack);
+
+    throw new ApiError(httpStatus.BAD_REQUEST, error.message);
+  }
+};
+
+const transferFundsWithStripe = async (userId: string, bookingId: string) => {
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      accountId: true,
+    },
+  });
+
+  const existingBooking = await prisma.booking.findUnique({
+    where: {
+      id: bookingId,
+    },
+    select: {
+      serviceId: true,
+      service: {
+        select: {
+          userId: true,
+        },
+      },
+      price: true,
+      paymentIntentId: true,
+      status: true,
+    },
+  });
+
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: existingBooking?.service?.userId ?? "",
+    },
+    select: {
+      email: true,
+    },
+  });
+
+  //  const payment = await prisma.payment.create({
+  //    data: {
+  //      paymentIntentId: paymentIntent.id,
+  //      customerId,
+  //      paymentMethodId,
+  //      amount,
+  //      bookingId,
+  //      paymentDate: new Date(),
+  //    },
+  //    select: { id: true },
+  //  });
+
+  await prisma.booking.update({
+    where: {
+      id: bookingId,
+    },
+    data: {
+      status: "COMPLETED",
+    },
+  });
+
+  const paymentId = await prisma.payment.findFirst({
+    where: {
+      bookingId: bookingId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!paymentId) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Payment not found");
+  }
+
+  await prisma.payment.update({
+    where: {
+      id: paymentId.id,
+    },
+    data: {
+      isTransfer: true,
+    },
+  });
+
+  const paymentIntent = await stripe.paymentIntents.retrieve(
+    existingBooking?.paymentIntentId ?? ""
+  );
+
+  if (paymentIntent.status !== "succeeded") {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Payment intent has not been successful."
+    );
+  }
+
+  const amountReceived = paymentIntent.amount_received;
+  if (amountReceived <= 0) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "No funds available in the payment intent."
+    );
+  }
+
+  const destinationAccountId = existingUser?.accountId;
+  if (!destinationAccountId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "No connected account found for the user."
+    );
+  }
+
+  const transferAmount = Math.floor(amountReceived * 0.9);
+
+  const transfer = await stripe.transfers.create({
+    amount: transferAmount,
+    currency: "usd",
+    destination: destinationAccountId,
+    description: "Transfer to connected account after payment",
+  });
+
+  return transfer;
+};
+
+const capturePaymentRequestToStripe = async (payload: {
+  paymentIntentId: string;
+}) => {
+  try {
+    const { paymentIntentId } = payload;
+    const paymentIntent = await stripe.paymentIntents.capture(paymentIntentId);
+
+    return paymentIntent;
+  } catch (error: any) {
+    throw new ApiError(httpStatus.CONFLICT, error.message);
+  }
+};
+
+const saveNewCardWithExistingCustomerIntoStripe = async (payload: {
+  customerId: string;
+  paymentMethodId: string;
+}) => {
+  try {
+    const { customerId, paymentMethodId } = payload;
+
+    // Attach the new PaymentMethod to the existing Customer
+    await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: customerId,
+    });
+
+    // Optionally, set the new PaymentMethod as the default
+    await stripe.customers.update(customerId, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId,
+      },
+    });
+
+    return {
+      customerId: customerId,
+      paymentMethodId: paymentMethodId,
+    };
+  } catch (error: any) {
+    throw new ApiError(httpStatus.CONFLICT, error.message);
+  }
+};
+
+const getCustomerSavedCardsFromStripe = async (customerId: string) => {
+  try {
+    // List all payment methods for the customer
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: customerId,
+      type: "card",
+    });
+
+    // Extract only the last4 digits from each payment method
+    const cards = paymentMethods.data.map((card) => ({
+      last4: card.card?.last4,
+      brand: card.card?.brand,
+      paymentMethodsId: card.id,
+    }));
+
+    return cards;
+  } catch (error: any) {
+    throw new ApiError(httpStatus.CONFLICT, error.message);
+  }
+};
+
+// Delete a card from a customer in the stripe
+const deleteCardFromCustomer = async (paymentMethodId: string) => {
+  try {
+    await stripe.paymentMethods.detach(paymentMethodId);
+    return { message: "Card deleted successfully" };
+  } catch (error: any) {
+    throw new ApiError(httpStatus.CONFLICT, error.message);
+  }
+};
+
+// Refund amount to customer in the stripe
+const refundPaymentToCustomer = async (payload: {
+  paymentIntentId: string;
+}) => {
+  try {
+    // Refund the payment intent
+    const refund = await stripe.refunds.create({
+      payment_intent: payload?.paymentIntentId,
+    });
+
+    return refund;
+  } catch (error: any) {
+    throw new ApiError(httpStatus.CONFLICT, error.message);
+  }
+};
+
+const getCustomerDetailsFromStripe = async (customerId: string) => {
+  try {
+    // Retrieve the customer details from Stripe
+    const customer = await stripe.customers.retrieve(customerId);
+
+    return customer;
+  } catch (error: any) {
+    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+  }
+};
+
+const getAllCustomersFromStripe = async () => {
+  try {
+    // Retrieve all customers from Stripe
+    const customers = await stripe.customers.list({
+      limit: 2,
+    });
+
+    return customers;
+  } catch (error: any) {
+    throw new ApiError(httpStatus.CONFLICT, error.message);
+  }
+};
+
+const transactions = async () => {
+  const result = await prisma.payment.findMany({
+    where: {
+      isTransfer: true,
+    },
+    select: {
+      id: true,
+      amount: true,
+      isTransfer: true,
+    },
+  });
+  return result;
+};
+
+const generateNewAccountLink = async (user: User) => {
+  const accountLink = await stripe.accountLinks.create({
+    account: user.accountId as string,
+    refresh_url: "https://success-page-xi.vercel.app/not-success",
+    return_url: "https://success-page-xi.vercel.app/success",
+    type: "account_onboarding",
+  });
+  // console.log(accountLink.url, 'check account link');
+  const html = `
+<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif; color: #333; border: 1px solid #ddd; border-radius: 10px;">
+  <h2 style="color: #007bff; text-align: center;">Complete Your Onboarding</h2>
+
+  <p>Dear <b>${user.name}</b>,</p>
+
+  <p>We’re excited to have you onboard! To get started, please complete your onboarding process by clicking the link below:</p>
+
+  <div style="text-align: center; margin: 20px 0;">
+    <a href=${accountLink.url} style="background-color: #007bff; color: #fff; padding: 12px 20px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+      Complete Onboarding
+    </a>
+  </div>
+
+  <p>If the button above doesn’t work, you can also copy and paste this link into your browser:</p>
+  <p style="word-break: break-all; background-color: #f4f4f4; padding: 10px; border-radius: 5px;">
+    ${accountLink.url}
+  </p>
+
+  <p><b>Note:</b> This link is valid for a limited time. Please complete your onboarding as soon as possible.</p>
+
+  <p>Thank you,</p>
+  <p><b>The Support Team</b></p>
+
+  <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
+  <p style="font-size: 12px; color: #777; text-align: center;">
+    If you didn’t request this, please ignore this email or contact support.
+  </p>
+</div>
+`;
+  await sendEmail(user?.email || "", "Your Onboarding Url", html);
+};
+
+const myPayment = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      customerId: true,
+    },
+  });
+
+  const payment = await prisma.payment.findMany({
+    where: {
+      customerId: user?.customerId,
+    },
+    select: {
+      id: true,
+      amount: true,
+      paymentDate: true,
+    },
+  });
+
+  return payment;
+};
+
+export const StripeServices = {
+  saveCardWithCustomerInfoIntoStripe,
+  authorizedPaymentWithSaveCardFromStripe,
+  capturePaymentRequestToStripe,
+  saveNewCardWithExistingCustomerIntoStripe,
+  getCustomerSavedCardsFromStripe,
+  deleteCardFromCustomer,
+  refundPaymentToCustomer,
+  transferFundsWithStripe,
+  getCustomerDetailsFromStripe,
+  getAllCustomersFromStripe,
+  // updateAccount,
+  transactions,
+  generateNewAccountLink,
+  myPayment,
 };

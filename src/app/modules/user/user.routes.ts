@@ -14,9 +14,19 @@ router.post(
 
 router.get("/", UserControllers.getAllUsers);
 
+router.get("/admin", UserControllers.getAllAdmin);
+
 router.get("/seller", UserControllers.getAllSellerUsers);
 
+router.get("/user", UserControllers.getAllCustomerUsers);
+
 router.get("/me", auth(), UserControllers.getMyProfile);
+
+router.get(
+  "/single-seller/:id",
+  auth("ADMIN", "SUPERADMIN"),
+  UserControllers.getSingleSellerFromDB
+);
 
 router.get("/:id", auth(), UserControllers.getUserDetails);
 router.put(
@@ -39,6 +49,12 @@ router.post(
   UserControllers.deleteUser
 );
 
+router.delete(
+  "/admin-delete/:id",
+  auth("SUPERADMIN"),
+  UserControllers.deleteAdmin
+);
+
 router.post(
   "/notification-permission",
   auth("USER", "ADMIN", "SELLER"),
@@ -50,6 +66,8 @@ router.put(
   auth("USER", "ADMIN", "SELLER"),
   UserControllers.changePassword
 );
+
+router.post("/social-login", UserControllers.socialLogin);
 
 
 export const UserRouters = router;

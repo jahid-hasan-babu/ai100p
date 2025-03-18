@@ -142,6 +142,42 @@ const getSinglePost = async (id: string) => {
   return post;
 };
 
+const getPopularPosts = async (options: IPaginationOptions) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+
+  const result = await prisma.post.findMany({
+    where: {
+      isDeleted: false,
+    },
+    orderBy: {
+      Like: {
+        _count: "desc",
+      },
+    },
+    take: limit,
+    skip,
+    select: {
+      id: true,
+      image: true,
+    },
+  });
+
+  const total = await prisma.post.count({
+    where: {
+      isDeleted: false,
+    },
+  });
+
+  return {
+    meta: {
+      total,
+      page,
+      limit,
+    },
+    data: result,
+  };
+};
+
 const updatePost = async (id: string, payload: any, files: any) => {
   const post = await prisma.post.findUnique({
     where: {
@@ -202,6 +238,7 @@ export const PostServices = {
   createPost,
   getAllPosts,
   getSinglePost,
+  getPopularPosts,
   updatePost,
   deletePost,
 };
