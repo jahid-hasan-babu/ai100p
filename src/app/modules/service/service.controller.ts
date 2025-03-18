@@ -67,6 +67,17 @@ const getPopularArtist = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getPopularServices = catchAsync(async (req: Request, res: Response) => {
+  const options = req.query;
+  const result = await serviceServices.getPopularServices(options);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    message: "Services retrieved successfully",
+    data: result,
+  });
+});
+
 const updateService = catchAsync(async (req: Request, res: Response) => {
   const serviceId = req.params.id;
   const userId = req.user.id;
@@ -104,6 +115,7 @@ export const ServiceControllers = {
   getAllServices,
   getSingleService,
   getPopularArtist,
+  getPopularServices,
   updateService,
   deleteService,
 };

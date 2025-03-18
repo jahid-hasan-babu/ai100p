@@ -5,6 +5,7 @@ import httpStatus from 'http-status';
 import { StripeServices } from './payment.service';
 import Stripe from "stripe";
 import config from "../../../config";
+import prisma from "../../utils/prisma";
 const apiVersion = "2024-12-18.acacia";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion,
@@ -147,6 +148,7 @@ const getAllCustomers = catchAsync(async (req: any, res: any) => {
     data: result,
   });
 });
+
 // const handleWebHook = catchAsync(async (req: any, res: any) => {
 //   const sig = req.headers["stripe-signature"] as string;
 //   // console.log(sig);
@@ -228,6 +230,17 @@ const getAllCustomers = catchAsync(async (req: any, res: any) => {
 //   res.status(200).send("Event received");
 // });
 
+const transactions = catchAsync(async (req: any, res: any) => {
+  const result = await StripeServices.transactions();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Transactions retrieved successfully",
+    data: result,
+  });
+});
+
 const myPayment = catchAsync(async (req: any, res: any) => {
   const userId = req.user.id;
   const result = await StripeServices.myPayment(userId);
@@ -250,6 +263,7 @@ export const PaymentController = {
   refundPaymentToCustomer,
   transferFundsWithStripe,
   getCustomerDetails,
+  transactions,
   getAllCustomers,
   myPayment,
 };

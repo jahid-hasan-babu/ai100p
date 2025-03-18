@@ -12,100 +12,191 @@ import { IPaginationOptions } from "../../interface/pagination.type";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import {  searchFilter4 } from "../../utils/searchFilter";
 import { StripeServices } from "../payment/payment.service";
-
+import sentEmailUtility from "../../utils/sentEmailUtility";
 
 const requestBooking = async (
   userId: string,
   payload: any,
   serviceId: string
 ) => {
-  
-    const existingService = await prisma.service.findUnique({
-      where: { id: serviceId },
-      select: { time: true, userId: true }, 
-    });
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+  const existingService = await prisma.service.findUnique({
+    where: { id: serviceId },
+    select: { time: true, userId: true },
+  });
 
-    if (!existingService) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Service not available");
-    }
-
-    // Ensure the time array exists
-    if (!Array.isArray(existingService.time)) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        "Time slots are not available for this service"
-      );
+  if (!existingService) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Service not available");
   }
-  
-   const timeSlots = existingService.time as { time: string; status: string }[];
 
-  const slotExists = timeSlots.some((slot) => slot.time === payload.time && slot.status === "available");
+  // Ensure the time array exists
+  if (!Array.isArray(existingService.time)) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Time slots are not available for this service"
+    );
+  }
 
+  const timeSlots = existingService.time as { time: string; status: string }[];
 
-    if (!slotExists) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        "Selected time slot is not available"
-      );
-    }
+  const slotExists = timeSlots.some(
+    (slot) => slot.time === payload.time && slot.status === "available"
+  );
 
-    // Create a new booking entry
-    const booking = await prisma.booking.create({
+  if (!slotExists) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Selected time slot is not available"
+    );
+  }
+
+  // Create a new booking entry
+  const booking = await prisma.booking.create({
+    data: {
+      userId,
+      ...payload,
+      serviceId,
+    },
+  });
+
+  // Generate OTP
+  const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+
+  const emailSubject = "OTP Verification";
+
+  // Plain text version
+  const emailText = `Your OTP is: ${otp}`;
+
+  // HTML content for the email design
+  const emailHTML = `
+    <table cellpadding="0" cellspacing="0" align="center" style="width:100%; table-layout:fixed; background-color:#f5f5f5;">
+        <tr>
+            <td align="center">
+                <table cellpadding="0" cellspacing="0" style="background-color:#ffffff; width:600px; border-collapse:collapse;">
+                    <tr>
+                        <td align="center" style="padding:30px 20px;">
+                            <img src="https://i.ibb.co/yVsctTq/file-1.png" alt="Logo" width="200" style="display:block; border:0;"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding:10px 20px;">
+                            <h3 style="margin:0; font-family:'Arial', sans-serif; font-size:46px; font-weight:bold; color:#333;">
+                                Reset Password
+                            </h3>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding:5px 40px;">
+                            <p style="margin:0; font-family:'Arial', sans-serif; font-size:14px; color:#333;">
+                                We received a request to reset your UIPtv Account password.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding:10px 20px;">
+                            <table cellpadding="0" cellspacing="0" style="width:100%; border:2px dashed #ccc; border-radius:5px;">
+                                <tr>
+                                    <td align="center" style="padding:20px;">
+                                        <h3 style="margin:0; font-family:'Arial', sans-serif; font-size:26px; font-weight:bold; color:#333;">
+                                            Your verification code is:
+                                        </h3>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding:10px 20px;">
+                                        <h1 style="margin:0; font-family:'Arial', sans-serif; font-size:46px; font-weight:bold; color:#5c68e2;">
+                                            ${otp}
+                                        </h1>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>`;
+
+  // Send email with both plain text and HTML
+  if (user && user.email) {
+    await sentEmailUtility(user.email, emailSubject, emailText, emailHTML);
+  } else {
+    throw new ApiError(httpStatus.BAD_REQUEST, "User email not found");
+  }
+
+  const existingOtp = await prisma.paymentOtp.findFirst({
+    where: { email: user?.email ?? "" },
+  });
+
+  if (existingOtp) {
+    await prisma.paymentOtp.update({
+      where: {
+        id: existingOtp.id,
+      },
       data: {
-        userId,
-        ...payload,
-        serviceId,
+        otp: otp as any,
       },
     });
-  
-
-// const timeSlots = Array.isArray(existingService.time)
-//   ? (existingService.time as { time: string; status: string }[])
-//   : [];
-
-const updatedTime = timeSlots.map((slot) =>
-  slot.time === payload.time ? { ...slot, status: "booked" } : slot
-);
-
-    // Update the service with modified time array
-    await prisma.service.update({
-      where: { id: serviceId },
-      data: { time: updatedTime },
+  } else {
+    await prisma.paymentOtp.create({
+      data: {
+        email: user?.email ?? "",
+        otp: otp as any,
+      },
     });
+  }
 
- 
-    // try {
-    //   const notificationData = {
-    //     title: "New Booking Request",
-    //     body: `A new booking request has been made for ${payload.time}.`,
-    //     bookingId: booking.id,
-    //     receiverId: existingService.userId, // Notify the service provider
-    //     senderId: userId,
-    //   };
+  const updatedTime = timeSlots.map((slot) =>
+    slot.time === payload.time ? { ...slot, status: "booked" } : slot
+  );
 
-    //   await notificationServices.sendSingleNotification({
-    //     params: { userId: existingService.userId },
-    //     body: notificationData,
-    //     user: { id: userId },
-    //   });
-    // } catch (error: any) {
-    //   console.error("Failed to send notification:", error.message);
-    // }
+  // Update the service with modified time array
+  await prisma.service.update({
+    where: { id: serviceId },
+    data: { time: updatedTime },
+  });
 
-    return booking;
-  
+  // const userData = await prisma.user.findUnique({
+  //   where: { email: payload.email },
+  // });
+
+  // if (!userData) {
+  //   throw new ApiError(httpStatus.BAD_REQUEST, "User not found");
+  // }
+
+  // try {
+  //   const notificationData = {
+  //     title: "New Booking Request",
+  //     body: `A new booking request has been made for ${payload.time}.`,
+  //     bookingId: booking.id,
+  //     receiverId: existingService.userId, // Notify the service provider
+  //     senderId: userId,
+  //   };
+
+  //   await notificationServices.sendSingleNotification({
+  //     params: { userId: existingService.userId },
+  //     body: notificationData,
+  //     user: { id: userId },
+  //   });
+  // } catch (error: any) {
+  //   console.error("Failed to send notification:", error.message);
+  // }
+
+  return booking;
 };
-
 
 const getMyBookings = async (
   userId: string,
   options: IPaginationOptions & { search?: string }
 ) => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const { search } = options;
 
-   const { page, limit, skip } = paginationHelper.calculatePagination(options);
-   const { search } = options;
-
-   const searchFilters = searchFilter4(search as string);
+  const searchFilters = searchFilter4(search as string);
   const bookings = await prisma.booking.findMany({
     where: { ...searchFilters, userId: userId, isPaid: true },
     orderBy: { createdAt: "desc" },
@@ -138,7 +229,9 @@ const getMyBookings = async (
   });
   return {
     meta: {
-      total: await prisma.booking.count({ where: { userId: userId, isPaid: true} }),
+      total: await prisma.booking.count({
+        where: { userId: userId, isPaid: true },
+      }),
       page,
       limit,
     },
@@ -146,13 +239,12 @@ const getMyBookings = async (
   };
 };
 
-
 const getMyBookingAsSeller = async (userId: string) => {
   const result = await prisma.booking.findMany({
     where: {
       isPaid: false,
-      service: { 
-          userId: userId,
+      service: {
+        userId: userId,
       },
     },
     orderBy: { createdAt: "desc" },
@@ -179,7 +271,6 @@ const getMyBookingAsSeller = async (userId: string) => {
   });
   return result;
 };
-
 
 const getMySingleBookingAsSeller = async (id: string) => {
   const result = await prisma.booking.findUnique({
@@ -208,14 +299,40 @@ const getMySingleBookingAsSeller = async (id: string) => {
     },
   });
   return result;
-}
-
+};
 
 const updateBookingStatus = async (
   userId: string,
   id: string,
   payload: any
 ) => {
+  const booking = await prisma.booking.findUnique({
+    where: { id: id },
+    select: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
+  });
+
+  const otpData = await prisma.paymentOtp.findFirst({
+    where: {
+      email: payload.email,
+    },
+  });
+
+  if (otpData?.otp !== payload.otp) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid OTP");
+  }
+
+  await prisma.paymentOtp.delete({
+    where: {
+      id: otpData?.id,
+    },
+  });
+
   const result = await prisma.booking.update({
     where: { id },
     data: {
@@ -227,7 +344,7 @@ const updateBookingStatus = async (
     StripeServices.transferFundsWithStripe(userId, id);
   }
 
-  return result;
+  return;
 };
 
 const acceptBooking = async (id: string) => {

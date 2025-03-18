@@ -110,6 +110,10 @@ const loginUserFromDB = async (payload: {
     },
   });
 
+  if (!userData) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
   const isCorrectPassword = await bcrypt.compare(
     payload.password,
     userData.password as string
@@ -256,7 +260,6 @@ const changePassword = async (payload: any) => {
     config.jwt.access_secret as Secret
   );
   const phone = decodedToken.phone;
-  console.log(phone);
 
   if (!phone) {
     throw new Error("Invalid token: Phone number is missing.");

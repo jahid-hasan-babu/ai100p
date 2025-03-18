@@ -49,6 +49,12 @@ router.post(
   UserControllers.deleteUser
 );
 
+router.delete(
+  "/admin-delete/:id",
+  auth("SUPERADMIN"),
+  UserControllers.deleteAdmin
+);
+
 router.post(
   "/notification-permission",
   auth("USER", "ADMIN", "SELLER"),

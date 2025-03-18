@@ -75,8 +75,6 @@ const authorizedPaymentWithSaveCardFromStripe = async (payload: {
       confirm: true,
     });
 
-    console.log(paymentIntent);
-
     if (paymentIntent.status === "succeeded") {
       // Step 2: Save payment and update booking in the database
 
@@ -86,6 +84,7 @@ const authorizedPaymentWithSaveCardFromStripe = async (payload: {
           customerId,
           paymentMethodId,
           amount,
+          bookingId,
           paymentDate: new Date(),
         },
         select: { id: true },
@@ -158,12 +157,46 @@ const transferFundsWithStripe = async (userId: string, bookingId: string) => {
     },
   });
 
+  //  const payment = await prisma.payment.create({
+  //    data: {
+  //      paymentIntentId: paymentIntent.id,
+  //      customerId,
+  //      paymentMethodId,
+  //      amount,
+  //      bookingId,
+  //      paymentDate: new Date(),
+  //    },
+  //    select: { id: true },
+  //  });
+
   await prisma.booking.update({
     where: {
       id: bookingId,
     },
     data: {
       status: "COMPLETED",
+    },
+  });
+
+  const paymentId = await prisma.payment.findFirst({
+    where: {
+      bookingId: bookingId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!paymentId) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Payment not found");
+  }
+
+  await prisma.payment.update({
+    where: {
+      id: paymentId.id,
+    },
+    data: {
+      isTransfer: true,
     },
   });
 
@@ -258,6 +291,8 @@ const getCustomerSavedCardsFromStripe = async (customerId: string) => {
     // Extract only the last4 digits from each payment method
     const cards = paymentMethods.data.map((card) => ({
       last4: card.card?.last4,
+      brand: card.card?.brand,
+      paymentMethodsId: card.id,
     }));
 
     return cards;
@@ -315,29 +350,20 @@ const getAllCustomersFromStripe = async () => {
     throw new ApiError(httpStatus.CONFLICT, error.message);
   }
 };
-// const updateAccount = async (payload: any) => {
-//   const user = await prisma.user.findFirst({
-//     where: {
-//       accountId: payload.id,
-//     },
-//     select: {
-//       id: true,
-//     },
-//   });
-//   if (!user) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "user not found");
-//   }
-//   await prisma.user.update({
-//     where: {
-//       id: user.id,
-//     },
-//     data: {
-//       onBoarding: true,
-//       isVerified: true,
-//     },
-//   });
-//   return;
-// };
+
+const transactions = async () => {
+  const result = await prisma.payment.findMany({
+    where: {
+      isTransfer: true,
+    },
+    select: {
+      id: true,
+      amount: true,
+      isTransfer: true,
+    },
+  });
+  return result;
+};
 
 const generateNewAccountLink = async (user: User) => {
   const accountLink = await stripe.accountLinks.create({
@@ -380,7 +406,6 @@ const generateNewAccountLink = async (user: User) => {
   await sendEmail(user?.email || "", "Your Onboarding Url", html);
 };
 
-
 const myPayment = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -390,7 +415,6 @@ const myPayment = async (userId: string) => {
       customerId: true,
     },
   });
-  console.log(user?.customerId);
 
   const payment = await prisma.payment.findMany({
     where: {
@@ -418,6 +442,7 @@ export const StripeServices = {
   getCustomerDetailsFromStripe,
   getAllCustomersFromStripe,
   // updateAccount,
+  transactions,
   generateNewAccountLink,
   myPayment,
 };

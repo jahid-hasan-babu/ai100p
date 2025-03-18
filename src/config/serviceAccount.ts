@@ -1,16 +1,16 @@
 export const serviceAccount = {
   type: "service_account",
-  project_id: "nomisman-notification",
-  private_key_id: "4a0f3d42f7da1f7fa474a4c862c43b2b8786ae53",
+  project_id: "lykk-93e42",
+  private_key_id: "aeec727d6cd8ab45cb4d29ccf605dbccd662e916",
   private_key:
-    "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDD7El64mJlRx3A\n3aJGaVXvfRyQ66x1z0aKq4xngAGGsQqcsvOk9tjHbA1dPbf+6KSjSeVBtOi/u6el\nm6aVAadt+PpJ09fXGNnZbaQ1fOdZp51ceLvI3w2ovBqEdE5RkP3J5Ti0znhNgt+8\n5BUmNXn9rXj1CrerDuZgw6r6H29e6DX4WJZMVbREctMvImoMrJg+yITtAvTtEhZU\n5HzG/CDSt6kdgTDJwvAgXJG7poBQs6DaTC/Onkss2EwVsq/V2u7H3dKDgz77OU0J\nDN13jMzD/HHubggFyo+crqa+sFdeFjrYoYyAfIvHacwro9/jkBW0eYQrrtZzVLqS\n/ZA94m0VAgMBAAECggEAR7ropB7iG2ZQFF6QnOrP1aCepshCGdfLYdWwz+vjoyaK\nVhiGb20YrNp4ghyokqEmNcpGLypG1Hulw1IbSQ6T+AVhzUnMCipFB//GUPbr1L0z\nNbnWNpLDc3V61+elDOPiptpPSpMVJHu34nY28AhAI4oxcLV9zRjla6P3ox+DLOF+\nsllpLGlwHbXeJCWp5m2hpoDvY0NCt04KAeYdM42xZnH2v5K4dvj9BfQjmkbW7AYL\n3+hBx6Ca2KtkECtcucS7J5uVMEfgIA115A3b9qkZt97a+6/TxWtzUzB0JGD9LD+J\np4xFjTCU6XK9pGJ9n32jnxNnN1vmbuNlzVnvR1TieQKBgQD2gXFsBXLN9KSmi16E\nrqeob3BimQvWwNhXtz7viERnb1VzdOk9dFTc98a7/IAtyvMjK2BezK3hhJ6X6aj3\nwepZqDcRyZidq/C46u99JZ7VUPMESeR8REdjJ5HLqt+4OOKgxoeAnm1+8Tc8XHcE\nWxUnPmAFJ9zR2Eaciv16POIvDwKBgQDLeBjIWwt67F4Kj8tXuF9IqadojSrX0CmZ\nOyrdLuVr4nvILL/lZyAlZJ6x+ofOUflWl2IZmltrzHoucoEe5ZkViT+iyh9f/iiH\nTFu6Rz+2A7/i2alz+Kjp8CHrkDURS0Mdt/1FKWnzqCGLD2HBivaesJP0pZknFJ+T\nXVYjWTEhmwKBgEcnI/sfM305gZFFJ1o7I8/dot4C+UTa01e2YCc5+Sy2GT9DXtPL\nUXea2bWHc+RD8ZyUN7QFdqdi5XhKDOi/A4svn/21aCUS7WAjCE/iXQ+L1ynEvnwU\nJVr8n/ve7ca6PMhVpeU9VbPPorb8paoPNHLocUTrtbSorfEfuXzgOBWHAoGBAJIz\naoNUwEwEWZJ3PmJ6raS1mwAKJ5XJEorzM9qYnutFYzIzzXNWBYg447r5TOoYhvQM\ndMX23uf3lneXeWYtDjGmXB5p49+C7bZCTMrt9T6hNRkY06TsMNtf28+64BbcII7T\nLN6sYmBdGDUmyVRbuNfQA5BQCVtGe19VOtbNePsvAoGACEQjBPwismocvYoLA4kb\nrPnNVl1QgEjiSqjhA/9moBGVo/li+kPZNm+e2Xvt47QmvOOKoDARRfcqlekjfRs1\n2iV47yuMqDOzx8+uamRAwW5Ocwg4qzSUh+hygEkgS0ZjdPiTnpBG9rljIdGIuW/t\nuunnSH4xLqtxuXG13EubS94=\n-----END PRIVATE KEY-----\n",
-  client_email:
-    "firebase-adminsdk-v1uno@nomisman-notification.iam.gserviceaccount.com",
-  client_id: "107662738111126361203",
+    "-----BEGIN PRIVATE KEY-----\nMIIEugIBADANBgkqhkiG9w0BAQEFAASCBKQwggSgAgEAAoIBAQC7oGyhaKWcIJZd\nVfXHZIlrFnxRgn0sF2XQk7qRrtdxzu06OSQeF0Bs19A7D6L2eWH4eLdPuLVv+KKi\n9abMsFSkIcqyYWa2Vmi5MZTRD3HrA0tGXfMPyzpEfB6ObKrta4I5e6ZoGKwHOOU7\nJQmb8EA9S0nZLhCRRsNgV6vu/1cCmh+FjylzYIAa9K7/FzgvoyimUh+qjS9uqP4x\nWfbhZ3dWZz1KZH1GqTShkqlTKQqUivbHxqOTqfToJleLjFsYOKCRZehctxiGaS8a\nduMPkZBM5zqAZ8gs2rxvhNdpkgj0acfUxHwf+M6WaxJVJONSfxdIDTdEF2Ota0EG\nNjw79DExAgMBAAECggEAD7O2J59q/akOAGdnW12e8Pj3pDgmCtS18vnMAzFlSxtY\nx9a8nq6OOBWrEehF+HfR0sIigC/aclGV5cqmYAqxOK+xx5ImbwPF/ZqoREM1Qsha\nqjvGUcftm0niYkO2ncoxoqcmFt/atLuGlperyVK2w5Jrjpr/7LKF+wf3Rff1Q4y2\n9z8vgZ/3w146br1BrV6FvFjLyrxLJ7G8FAKUWARegz6VsTWW/EUBEhA6mQNuWtse\nz0FLTDkVt1df2hNt8FPThpnVohnN8kB0d79yZsshZ0pZdBDhqyO1b8Qnxr7Afpth\nV/Q0VBgBsxLQYfyYPnb3g7tOLB+zLMYcV60hqJPsKQKBgQDk2YlgCV0DchpyZhNW\nTtrZKlWk29sjFtGwTNEGYCWiwUMHHGsUC3DbLLvTtpkUE7bxnEVI6dhTWqhSBWoS\n6r+QCyR92tYdo9SKX2jfUCLxgoP2qzmHvPYCf5V4YfpPjPZUVCqFwJbdA6sMrsFb\nQu9ehqxKpphluNHuAt2oORW8uQKBgQDR4uORPJ9a08J+aYxvylVsqDRSLK3pLGKS\nkh2Ihh/1tJ0uXXop0qMoQzzlP5Uh8HXv5zgp8E+TxmvHn1BqIlEQdTO2KQ6z5mgm\nrEAzqTx4Ln1wVJ0aGQARq/J/G0PoCjo8EJ4maVsImSZfbcKg9yhV4XKSf7wEvgEA\n64fkViiMOQJ/Wkl46WrIR5O822VqO6LgtMz+/QvAaReXovargNhuAMg+qY+Mr1vU\nKqR7dguUWVdt1eTRcPLRZhFeVv3L26rB6RJ8UysDTq5ULEN4HKKBJsdXSPpEuEjU\nxieP0O7W0ovKo3qRTDOvUYMg+N/5aQf/aEu5rboMZhWEvWJkEPp0mQKBgH/jTSCJ\nHNxeHaujKrRPSF/t2fucR9fFeMawi5hNiZnQlNnUkYR8WXhGCAv0Ay3r9CDa9ajw\nSbzUcYXwODKDeHubvoenWtMZeKrf2DriSvs78KkKlbN6OkWKTTdP6L+xw6wnwAXN\num9xyiTpn2cvUn+J4KMNfAYztC7YVTQ3n3tZAoGAFsz8RdK0JHNUJC5wuZWAOB/j\nW/U+lYaaqRKz+2nqfYAtbK0ufiXXAflksS0FdYWA81mk5FrwJQln1IlfLdm5lrrw\n9O2Ov5zdvneRHRI2As8ntLE6fgVnIOvqlzwDArW8zHHRjIdY5GUpMk1U0BnVbU9P\n4VNd1+iaFRXtJm3eGvY=\n-----END PRIVATE KEY-----\n",
+  client_email: "firebase-adminsdk-fbsvc@lykk-93e42.iam.gserviceaccount.com",
+  client_id: "108439771316865165623",
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
   token_uri: "https://oauth2.googleapis.com/token",
   auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
   client_x509_cert_url:
-    "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-v1uno%40nomisman-notification.iam.gserviceaccount.com",
+    "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40lykk-93e42.iam.gserviceaccount.com",
   universe_domain: "googleapis.com",
 };
+
