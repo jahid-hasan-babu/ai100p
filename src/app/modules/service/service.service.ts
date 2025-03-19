@@ -9,7 +9,7 @@ import { deleteFromS3ByUrl } from "../../../helpers/fileDeletedFromS3";
 import { StripeServices } from "../payment/payment.service";
 import { stripe } from "../../utils/stripe";
 import { getDistance } from "geolib";
-import path from "path";
+
 
 const createService = async (payload: any, userId: string, files: any) => {
   const existingUser = await prisma.user.findUnique({

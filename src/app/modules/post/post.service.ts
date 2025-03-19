@@ -58,6 +58,7 @@ const getAllPosts = async (
           name: true,
           profileImage: true,
           profileStatus: true,
+          role: true,
         },
       },
       Like: {
