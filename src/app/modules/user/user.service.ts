@@ -469,6 +469,7 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
           locationLong: true,
         },
       },
+      Post: true,
       _count: {
         select: {
           followers: true,
