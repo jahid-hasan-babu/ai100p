@@ -254,6 +254,11 @@ const getMyBookingAsSeller = async (userId: string) => {
       date: true,
       bookingStatus: true,
       status: true,
+      service: {
+        select: {
+          serviceImage: true,
+        },
+      },
       user: {
         select: {
           id: true,
