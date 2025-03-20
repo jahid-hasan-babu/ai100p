@@ -1,16 +1,9 @@
 import prisma from "../../utils/prisma";
 import httpStatus from "http-status";
 import ApiError from "../../errors/ApiError";
-// import { notificationServices } from "../notifications/notification.service";
-// import { StripeServices } from "../payment/payment.service";
-// import sentEmailUtility from "../../utils/sentEmailUtility";
-// import { generateCode } from "../../utils/generateToken";
-import config from "../../../config";
-import { Secret } from "jsonwebtoken";
-import jwt from "jsonwebtoken";
 import { IPaginationOptions } from "../../interface/pagination.type";
 import { paginationHelper } from "../../../helpers/paginationHelper";
-import {  searchFilter4 } from "../../utils/searchFilter";
+import { searchFilter4 } from "../../utils/searchFilter";
 import { StripeServices } from "../payment/payment.service";
 import sentEmailUtility from "../../utils/sentEmailUtility";
 
@@ -160,32 +153,6 @@ const requestBooking = async (
     data: { time: updatedTime },
   });
 
-  // const userData = await prisma.user.findUnique({
-  //   where: { email: payload.email },
-  // });
-
-  // if (!userData) {
-  //   throw new ApiError(httpStatus.BAD_REQUEST, "User not found");
-  // }
-
-  // try {
-  //   const notificationData = {
-  //     title: "New Booking Request",
-  //     body: `A new booking request has been made for ${payload.time}.`,
-  //     bookingId: booking.id,
-  //     receiverId: existingService.userId, // Notify the service provider
-  //     senderId: userId,
-  //   };
-
-  //   await notificationServices.sendSingleNotification({
-  //     params: { userId: existingService.userId },
-  //     body: notificationData,
-  //     user: { id: userId },
-  //   });
-  // } catch (error: any) {
-  //   console.error("Failed to send notification:", error.message);
-  // }
-
   return booking;
 };
 
@@ -259,6 +226,14 @@ const getMyBookingAsSeller = async (userId: string) => {
       date: true,
       bookingStatus: true,
       status: true,
+      service: {
+        select: {
+          id: true,
+          serviceImage: true,
+          title: true,
+          location: true,
+        },
+      },
       user: {
         select: {
           id: true,
@@ -288,6 +263,14 @@ const getMySingleBookingAsSeller = async (id: string) => {
       date: true,
       bookingStatus: true,
       status: true,
+      service: {
+        select: {
+          id: true,
+          serviceImage: true,
+          title: true,
+          location: true,
+        },
+      },
       user: {
         select: {
           id: true,
