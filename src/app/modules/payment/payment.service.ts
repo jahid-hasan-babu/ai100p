@@ -67,7 +67,7 @@ const authorizedPaymentWithSaveCardFromStripe = async (payload: {
     });
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // Total amount in cents
+      amount: Math.round(amount * 100), // Total amount in cents
       currency: "usd",
       customer: customerId,
       payment_method: paymentMethodId,
