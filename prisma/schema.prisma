@@ -389,4 +389,5 @@ enum BookingStatus {
 enum BookingType {
   PENDING
   CONFIRMED
+  COMPLETED
 }

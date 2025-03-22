@@ -315,12 +315,15 @@ const updateBookingStatus = async (
     },
   });
 
-  const result = await prisma.booking.update({
+  await prisma.booking.update({
     where: { id },
     data: {
       status: payload.status,
+      bookingStatus: payload.status,
     },
   });
+  
+
 
   if (payload.status === "COMPLETED") {
     StripeServices.transferFundsWithStripe(userId, id);
