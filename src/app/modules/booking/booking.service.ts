@@ -257,6 +257,8 @@ const getMyBookingAsSeller = async (userId: string) => {
       service: {
         select: {
           serviceImage: true,
+          title: true,
+          date: true,
         },
       },
       user: {
