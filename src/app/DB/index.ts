@@ -30,8 +30,8 @@ const seedSuperAdmin = async () => {
       });
       console.log('Super Admin created successfully.');
     } else {
-      return;
-      //   console.log("Super Admin already exists.");
+      // return;
+      console.log("Super Admin already exists.");
     }
   } catch (error) {
     console.error('Error seeding Super Admin:', error);

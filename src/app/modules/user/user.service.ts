@@ -476,6 +476,7 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
           Post: true,
         },
       },
+      Post: true,
     },
   });
 
