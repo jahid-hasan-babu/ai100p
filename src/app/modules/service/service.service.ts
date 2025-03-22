@@ -273,6 +273,7 @@ const getAllServices = async (
 };
 
 const getSingleService = async (id: string, userId: string) => {
+  const todayDate = new Date().toISOString().split("T")[0];
   // Fetch the main service
   const service = await prisma.service.findUnique({
     where: { id },
@@ -294,9 +295,9 @@ const getSingleService = async (id: string, userId: string) => {
   const otherServices = await prisma.service.findMany({
     where: {
       userId: service.userId,
+      date: { gte: todayDate },
       id: { not: id },
     },
-    take: 10,
     select: {
       id: true,
       title: true,
