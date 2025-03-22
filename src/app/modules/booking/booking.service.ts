@@ -65,54 +65,34 @@ const requestBooking = async (
   const emailText = `Your OTP is: ${otp}`;
 
   // HTML content for the email design
-  const emailHTML = `
-    <table cellpadding="0" cellspacing="0" align="center" style="width:100%; table-layout:fixed; background-color:#f5f5f5;">
-        <tr>
-            <td align="center">
-                <table cellpadding="0" cellspacing="0" style="background-color:#ffffff; width:600px; border-collapse:collapse;">
-                    <tr>
-                        <td align="center" style="padding:30px 20px;">
-                            <img src="https://i.ibb.co/yVsctTq/file-1.png" alt="Logo" width="200" style="display:block; border:0;"/>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding:10px 20px;">
-                            <h3 style="margin:0; font-family:'Arial', sans-serif; font-size:46px; font-weight:bold; color:#333;">
-                                Reset Password
-                            </h3>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding:5px 40px;">
-                            <p style="margin:0; font-family:'Arial', sans-serif; font-size:14px; color:#333;">
-                                We received a request to reset your UIPtv Account password.
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding:10px 20px;">
-                            <table cellpadding="0" cellspacing="0" style="width:100%; border:2px dashed #ccc; border-radius:5px;">
-                                <tr>
-                                    <td align="center" style="padding:20px;">
-                                        <h3 style="margin:0; font-family:'Arial', sans-serif; font-size:26px; font-weight:bold; color:#333;">
-                                            Your verification code is:
-                                        </h3>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td align="center" style="padding:10px 20px;">
-                                        <h1 style="margin:0; font-family:'Arial', sans-serif; font-size:46px; font-weight:bold; color:#5c68e2;">
-                                            ${otp}
-                                        </h1>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>`;
+  const emailHTML = `<!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>OTP Verification</title>
+  </head>
+  <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f9fc; margin: 0; padding: 0; line-height: 1.6;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+          <div style="background-color: #FF7600; background-image: linear-gradient(135deg, #FF7600, #45a049); padding: 30px 20px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);">OTP Verification</h1>
+          </div>
+          <div style="padding: 20px 12px; text-align: center;">
+              <p style="font-size: 18px; color: #333333; margin-bottom: 10px;">Hello,</p>
+              <p style="font-size: 18px; color: #333333; margin-bottom: 20px;">Your OTP for verifying your account is:</p>
+              <p style="font-size: 36px; font-weight: bold; color: #FF7600; margin: 20px 0; padding: 10px 20px; background-color: #f0f8f0; border-radius: 8px; display: inline-block; letter-spacing: 5px;">${otp}</p>
+              <p style="font-size: 16px; color: #555555; margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">Please provided this OTP to seller for verification.</p>
+              <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                  <p style="font-size: 14px; color: #888888; margin-bottom: 4px;">Thank you for choosing our service!</p>
+                  <p style="font-size: 14px; color: #888888; margin-bottom: 0;">If you didn't request this OTP, please ignore this email.</p>
+              </div>
+          </div>
+          <div style="background-color: #f9f9f9; padding: 10px; text-align: center; font-size: 12px; color: #999999;">
+              <p style="margin: 0;">© 2025 All rights reserved.</p>
+          </div>
+      </div>
+  </body>
+  </html>`;
 
   // Send email with both plain text and HTML
   if (user && user.email) {
@@ -237,7 +217,7 @@ const getMyBookings = async (
 const getMyBookingAsSeller = async (userId: string) => {
   const result = await prisma.booking.findMany({
     where: {
-      isPaid: false,
+      isPaid: true,
       service: {
         userId: userId,
       },
@@ -321,7 +301,7 @@ const updateBookingStatus = async (
 
   const otpData = await prisma.paymentOtp.findFirst({
     where: {
-      email: payload.email,
+      email: booking?.user.email ?? "",
     },
   });
 
