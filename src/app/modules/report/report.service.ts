@@ -9,17 +9,32 @@ import { userId } from './../chat/chat.interface';
 
 const makeReport = async (userId: string, payload: any, files: any) => {
    
-  if(payload.postId){
-    const post = await prisma.post.findUnique({
-      where: {
-        id: payload.postId,
-      },
+  if (payload.postId) {
+    const result = await prisma.$transaction(async (tx) => {
+      const post = await tx.post.findUnique({
+        where: {
+          id: payload.postId,
+        },
+      });
+
+      if (!post) {
+        const service = await tx.service.findUnique({
+          where: {
+            id: payload.postId,
+          },
+        });
+        return service;
+      } else {
+        return post;
+      }
     });
-    if (!post) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Post not found");
+
+    if (!result) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Not found");
     }
   }
-
+     
+   
   if(payload.serviceId){
     const service = await prisma.service.findUnique({
       where: {
