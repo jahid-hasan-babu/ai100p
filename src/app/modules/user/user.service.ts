@@ -409,6 +409,7 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
     where: { id },
   });
 
+
   if (!existingUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
@@ -416,8 +417,8 @@ const getUserDetailsFromDB = async (id: string, currentUserId: string) => {
   // Check if the current user follows the target user
   const isFollow = await prisma.follower.findFirst({
     where: {
-      followerId: currentUserId,
-      followingId: id,
+      followerId: id,
+      followingId: currentUserId,
     },
   });
 
