@@ -752,99 +752,90 @@ const notificationPermission = async (id: string, payload: any) => {
 };
 
 const socialLogin = async (payload: any) => {
-  try {
-    const user = await prisma.user.findFirst({
-      where: {
-        email: payload.email,
+  const user = await prisma.user.findFirst({
+    where: {
+      email: payload.email,
+    },
+  });
+
+  if (user) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { fcmToken: payload.fcmToken || null },
+    });
+    const accessToken = generateToken(
+      {
+        id: user.id,
+        email: user.email || "",
+        role: user.role,
       },
+      config.jwt.access_secret as Secret,
+      config.jwt.access_expires_in as string
+    );
+
+    return {
+      id: user.id,
+      name: user.name,
+      userName: user.userName,
+      profileImage: user.profileImage,
+      profileStatus: user.profileStatus,
+      email: user.email,
+      customerId: user.customerId,
+      locationLat: user.locationLat,
+      locationLong: user.locationLong,
+      role: user.role,
+      accessToken: accessToken,
+    };
+  } else {
+    const result = await prisma.$transaction(async (transactionClient) => {
+      const stripeCustomer = await stripe.customers.create({
+        email: payload.email,
+        name: payload.fullName || undefined,
+        phone: payload.phone || undefined,
+      });
+
+      if (!stripeCustomer || !stripeCustomer.id) {
+        throw new ApiError(
+          httpStatus.INTERNAL_SERVER_ERROR,
+          "Failed to create a Stripe customer"
+        );
+      }
+
+      const newUser = await transactionClient.user.create({
+        data: {
+          email: payload.email || "",
+          role: payload.role || "USER",
+          customerId: stripeCustomer.id,
+          fcmToken: payload.fcmToken || "",
+        },
+      });
+
+      return newUser;
     });
 
-    if (user) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { fcmToken: payload.fcmToken || null },
-      });
-      const accessToken = generateToken(
-        {
-          id: user.id,
-          email: user.email || "",
-          role: user.role,
-        },
-        config.jwt.access_secret as Secret,
-        config.jwt.access_expires_in as string
-      );
-
-      return {
-        id: user.id,
-        name: user.name,
-        userName: user.userName,
-        profileImage: user.profileImage,
-        profileStatus: user.profileStatus,
-        email: user.email,
-        customerId: user.customerId,
-        locationLat: user.locationLat,
-        locationLong: user.locationLong,
-        role: user.role,
-        accessToken: accessToken,
-      };
-    } else {
-      const result = await prisma.$transaction(async (transactionClient) => {
-        const stripeCustomer = await stripe.customers.create({
-          email: payload.email,
-          name: payload.fullName || undefined,
-          phone: payload.phone || undefined,
-        });
-
-        if (!stripeCustomer || !stripeCustomer.id) {
-          throw new ApiError(
-            httpStatus.INTERNAL_SERVER_ERROR,
-            "Failed to create a Stripe customer"
-          );
-        }
-
-        const newUser = await transactionClient.user.create({
-          data: {
-            email: payload.email || "",
-            role: payload.role || "USER",
-            customerId: stripeCustomer.id,
-            fcmToken: payload.fcmToken || "",
-          },
-        });
-
-        return newUser;
-      });
-
-      const accessToken = generateToken(
-        {
-          id: result.id,
-          email: result.email || "",
-          role: result.role,
-        },
-        config.jwt.access_secret as Secret,
-        config.jwt.access_expires_in as string
-      );
-
-      return {
+    const accessToken = generateToken(
+      {
         id: result.id,
-        name: result.name,
-        userName: result.userName,
-        profileImage: result.profileImage,
-        profileStatus: result.profileStatus,
-        email: result.email,
-        customerId: result.customerId,
-        locationLat: result.locationLat,
-        locationLong: result.locationLong,
+        email: result.email || "",
         role: result.role,
-        accessToken: accessToken,
-      };
-    }
-  } catch (error: any) {
-    console.error("Error during social login:", error.message || error);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Error during social login",
-      error.message || "An unexpected error occurred"
+      },
+      config.jwt.access_secret as Secret,
+      config.jwt.access_expires_in as string
     );
+
+    return {
+      id: result.id,
+      name: result.name,
+      userName: result.userName,
+      profileImage: result.profileImage,
+      profileStatus: result.profileStatus,
+      email: result.email,
+      customerId: result.customerId,
+      locationLat: result.locationLat,
+      locationLong: result.locationLong,
+      role: result.role,
+      accessToken: accessToken,
+    };
   }
 };
 
