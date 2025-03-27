@@ -8,7 +8,10 @@ import path from "path";
 const app: Application = express();
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:3001"],
+    origin: [
+      "https://ai100-dashboard-lemon.vercel.app",
+      "http://localhost:3000",
+    ],
   })
 );
 
