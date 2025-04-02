@@ -1,4 +1,4 @@
-﻿# SDGConsult Server
+﻿# Ai100p (llykk) Server
 
 ## Overview
 Ai100p (Llykk) Server is a Node.js and TypeScript-based backend application designed to handle API requests efficiently. This project follows best practices in backend development, ensuring scalability, security, and maintainability.
@@ -22,8 +22,8 @@ Ensure you have the following installed:
 ### Setup & Run
 1. Clone the repository:
    ```sh
-   git clone https://github.com/jahid-hasan-babu/sdgconsult_sserver.git
-   cd sdgconsult-server
+   git clone https://github.com/jahid-hasan-babu/ai100p.git
+   cd ai100p-server
    ```
 
 2. Install dependencies:
@@ -77,7 +77,9 @@ Ensure you have the following installed:
 ```
 
 ## API Documentation
-🚧 **Coming Soon**
+🚧 https://documenter.getpostman.com/view/39952026/2sAYdfqWxC
+## Base Url
+ 🚧 http://testbackend.boffo-global.com/api/v1
 
 ## Contributing
 1. Fork the repository
