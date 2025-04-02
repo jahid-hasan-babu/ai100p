@@ -79,7 +79,8 @@ Ensure you have the following installed:
 ## API Documentation
 🚧 https://documenter.getpostman.com/view/39952026/2sAYdfqWxC
 ## Base Url
- 🚧 http://testbackend.boffo-global.com/api/v1
+ 🚧 http://testbackend.boffo-global.com
+  And then use /api/v1
 
 ## Contributing
 1. Fork the repository
