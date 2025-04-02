@@ -37,7 +37,7 @@ Ensure you have the following installed:
    Create a `.env` file in the root directory and configure the necessary variables:
    ```env
    PORT=5000
-   DB_URI=mongodb://localhost:27017/sdgconsult
+   DB_URI=mongodb+srv://jahidhasan:jahid246578@cluster0.u5gekv5.mongodb.net/ai100p
    JWT_SECRET=your_secret_key
    ```
 
